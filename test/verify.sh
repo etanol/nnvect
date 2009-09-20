@@ -50,10 +50,10 @@ run_test()
     do
         printf "$t "
         printf "scalar  "
-        ../$1 --output=$RFILE --type=$t --scalar $2 >/dev/null
+        ../$1 --output=$RFILE --type=$t --scalar $2 >/dev/null 2>&1
         check $1 $2 euclid $t scalar
         printf "                            vector  "
-        ../$1 --output=$RFILE --type=$t $2 >/dev/null
+        ../$1 --output=$RFILE --type=$t $2 >/dev/null 2>&1
         check $1 $2 euclid $t
         printf "                     "
     done
@@ -63,10 +63,10 @@ run_test()
     do
         printf "$t "
         printf "scalar  "
-        ../$1 --manhattan --output=$RFILE --type=$t --scalar $2 >/dev/null
+        ../$1 --manhattan --output=$RFILE --type=$t --scalar $2 >/dev/null 2>&1
         check $1 $2 manhattan $t scalar
         printf "                            vector  "
-        ../$1 --manhattan --output=$RFILE --type=$t $2 >/dev/null
+        ../$1 --manhattan --output=$RFILE --type=$t $2 >/dev/null 2>&1
         check $1 $2 manhattan $t
         printf "                     "
     done
