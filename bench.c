@@ -73,7 +73,6 @@ int main (int argc, char **argv)
         enum distancekind kind;
         struct db *db, *train_db;
         struct timestats *ts;
-        struct stats sts;
 
         progname = argv[0];
         dumpfile = NULL;
@@ -186,16 +185,21 @@ int main (int argc, char **argv)
                 start_run(ts);
                 nn(type, kind, want_scalar, train_db, db);
                 stop_run(ts);
-                printf("%lf secs\n", get_last_run_time(ts));
+                printf("%lf s\n", get_last_run_time(ts));
         }
-        calculate_stats(ts, &sts);
-        printf("\nStatistics\n\n");
-        printf("- Minimum time: %lf secs\n", sts.minimum);
-        printf("- Maximum time: %lf secs\n", sts.maximum);
-        printf("- Average time: %lf secs\n", sts.mean);
-        printf("- Standard deviation: %lf secs\n\n", sts.deviation);
 
-        if (dumpfile != NULL)
+        if (dumpfile == NULL)
+        {
+                struct stats sts;
+
+                calculate_stats(ts, &sts);
+                printf("\nStatistics\n\n");
+                printf("- Minimum time: %lf s\n", sts.minimum);
+                printf("- Maximum time: %lf s\n", sts.maximum);
+                printf("- Average time: %lf s\n", sts.mean);
+                printf("- Standard deviation: %lf s\n\n", sts.deviation);
+        }
+        else
         {
                 int i;
                 FILE *f;
