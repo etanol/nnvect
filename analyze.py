@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 class Info:
-        SUFFIX = ".info"
-
         def __init__ (this):
                 this.lines   = 0
                 this.indices = 0
@@ -69,34 +67,30 @@ if len(sys.argv) <= 1:
         print "Please specify the files or directories to analyze"
         sys.exit(1)
 
-filelist = []
+filelist = set()
 for argument in sys.argv[1:]:
         if os.path.isdir(argument):
                 for dent in os.walk(argument):
                         for f in dent[2]:
-                                if not f.endswith(Info.SUFFIX) and \
-                                   not f.endswith(".t"):
-                                        filelist.append(os.path.join(dent[0], f))
-        elif os.path.isfile(argument):
-                if argument.endswith(".t"):
-                        filelist.append(argument[:-2])
-                else:
-                        filelist.append(argument)
+                                if f.endswith(".tst") or f.endswith(".trn"):
+                                        filelist.add(os.path.join(dent[0], f[:-4]))
+        elif os.path.isfile(argument + ".tst") and os.path.isfile(argument + ".trn"):
+                filelist.add(argument)
         else:
                 print "Ignoring %s" % argument
 
 print "Examining %d pairs" % len(filelist)
 for path in filelist:
-        if os.path.isfile(path + Info.SUFFIX) and \
-           os.path.getmtime(path + Info.SUFFIX) > os.path.getmtime(path):
+        if os.path.isfile(path + ".tst.info") and \
+           os.path.getmtime(path + ".tst.info") > os.path.getmtime(path + ".tst"):
                 print "Skipping %s" % path
                 continue
 
         try:
-                print "Analyzing %s" % path
-                blas = analyze(path)
-                print "Analyzing %s.t" % path
-                trblas = analyze(path + ".t")
+                print "Analyzing %s.tst" % path
+                blas = analyze(path + ".tst")
+                print "Analyzing %s.trn" % path
+                trblas = analyze(path + ".trn")
                 blas.indices = max(trblas.indices, blas.indices)
                 blas.floats = blas.floats or trblas.floats
                 trblas.indices = blas.indices
@@ -109,8 +103,8 @@ for path in filelist:
                 continue
 
         try:
-                save(blas, path + Info.SUFFIX)
-                save(trblas, path + ".t" + Info.SUFFIX)
+                save(blas, path + ".tst.info")
+                save(trblas, path + ".trn.info")
         except OSError, e:
                 print "ERROR: System error when saving %s: %s" % (path + Info.SUFFIX, e)
         except IOError, e:

@@ -70,7 +70,7 @@ static void strtolower (char *s)
 
 int main (int argc, char **argv)
 {
-        char *progname, *trfilename, *dumpfile, *typelabel;
+        char *progname, *fullname, *dumpfile, *typelabel;
         int cmdopt, has_opts, want_scalar, r, runs;
         int block_limit;
         enum valuetype type;
@@ -165,18 +165,20 @@ int main (int argc, char **argv)
 
         printf("Using %s NN.\n\n", (want_scalar ? "scalar" : "vectorized"));
 
-        trfilename = xstrcat(argv[0], ".t");
-        printf("Loading %s as %ss\n\n", trfilename,
+        fullname = xstrcat(argv[0], ".trn");
+        printf("Loading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        train_db = load_db(trfilename, type, block_limit, !want_scalar, 0);
-        free(trfilename);
+        train_db = load_db(fullname, type, block_limit, !want_scalar, 0);
+        free(fullname);
         if (train_db->block_items > 0)
                 train_db->block_items = adjusted_block_count(train_db->block_items);
         print_db_info(train_db);
 
-        printf("\nLoading %s as %ss\n\n", argv[0],
+        fullname = xstrcat(argv[0], ".tst");
+        printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(argv[0], type, 0, !want_scalar, train_db->block_items > 0);
+        db = load_db(fullname, type, 0, !want_scalar, train_db->block_items > 0);
+        free(fullname);
         memset(db->klass, 0, db->count * sizeof(int));
         print_db_info(db);
         printf("\n");
