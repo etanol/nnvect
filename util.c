@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
+#ifndef __APPLE__
+#  include <malloc.h>
+#endif
 
 
 void print_message (const char *file, int line, int severity,
