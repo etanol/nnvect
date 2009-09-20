@@ -181,10 +181,12 @@ int main (int argc, char **argv)
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
         {
-                printf("Run %d of %d\n", r + 1, runs);
+                printf("Run %d of %d ... ", r + 1, runs);
+                fflush(stdout);
                 start_run(ts);
                 nn(type, kind, want_scalar, train_db, db);
                 stop_run(ts);
+                printf("%lf secs\n", get_last_run_time(ts));
         }
         calculate_stats(ts, &sts);
         printf("\nStatistics\n\n");

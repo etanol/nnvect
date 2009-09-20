@@ -56,6 +56,14 @@ void stop_run (struct timestats *ts)
 }
 
 
+double get_last_run_time (struct timestats *ts)
+{
+        if (ts->current <= 0 || ts->current > ts->runs)
+                return -1.0;
+        return ts->measure[ts->current - 1];
+}
+
+
 void calculate_stats (struct timestats *ts, struct stats *sts)
 {
         int i;
