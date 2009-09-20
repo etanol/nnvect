@@ -48,9 +48,10 @@ static void usage (const char *progname)
 "                              int     (%d bytes)\n"
 "                              float   (%d bytes)\n"
 "                              double  (%d bytes)\n\n"
-"NOTE: Just a single file needs to be specified as input.  However, the files\n"
-"      \"dbfile.info\", \"dbfile.t\" and \"dbfile.t.info\" are assumed to reside\n"
-"      under the same path as \"dbfile\".\n\n", progname,
+"NOTE: Just the common prefix of all the files needs to be specified as input.\n"
+"      The \".trn\", \".tst\", \".trn.info\" and \".tst.info\" suffixes are\n"
+"      added automatically and the corresponding files are assumed to reside\n"
+"      under the same path.\n\n", progname,
                 (int) sizeof(char), (int) sizeof(short), (int) sizeof(int),
                 (int) sizeof(float), (int) sizeof(double));
 
