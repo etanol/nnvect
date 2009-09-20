@@ -23,7 +23,7 @@ DECLARE(nn_double_seq_M);
 DECLARE(nn_byte_vect_M);
 //DECLARE(nn_short_vect_E);
 DECLARE(nn_short_vect_M);
-//DECLARE(nn_int_vect_E);
+DECLARE(nn_int_vect_E);
 DECLARE(nn_int_vect_M);
 DECLARE(nn_float_vect_E);
 DECLARE(nn_float_vect_M);
@@ -49,7 +49,7 @@ void nn (enum valuetype type, enum distancekind kind, int sequential,
                         func = (sequential ? nn_short_seq_E : NULL);
                         break;
                 case INT:
-                        func = (sequential ? nn_int_seq_E : NULL);
+                        func = (sequential ? nn_int_seq_E : nn_int_vect_E);
                         break;
                 case FLOAT:
                         func = (sequential ? nn_float_seq_E : nn_float_vect_E);
