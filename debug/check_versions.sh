@@ -1,58 +1,56 @@
 #!/bin/sh
 
 #
-# Euclid versions
+# Check function.  Arguments are:
 #
-for type in byte short int float double
-do
-        echo -n "Verifying Euclid, scalar, $type... "
-        ./bench --runs 1 --type $type --scalar ../test/basic 2>&1 | \
-        awk -f filter.awk >result_check
-
-        if cmp -s ../test/debug.euclid result_check
-        then
-                echo "OK"
-        else
-                echo "FAILED"
-        fi
-
-        echo -n "Verifying Euclid, vectorized, $type... "
-        ./bench --runs 1 --type $type ../test/basic 2>&1 | \
-        awk -f filter.awk >result_check
-
-        if cmp -s ../test/debug.euclid result_check
-        then
-                echo "OK"
-        else
-                echo "FAILED"
-        fi
-done
-
+#       $1 -> euclid | manhattan
+#       $2 -> integers | floats
+#       $3 -> scalar | vector
 #
-# Manhattan versions
-#
-for type in byte short int
-do
-        echo -n "Verifying Manhattan, scalar, $type... "
-        ./bench --manhattan --runs 1 --type $type --scalar ../test/basic 2>&1 | \
-        awk -f filter.awk >result_check
+check()
+{
+        case $1 in
+                euclid)
+                        label1="   euclid"
+                        manh=""
+                        ;;
+                manhattan)
+                        label1="manhattan"
+                        manh="--manhattan"
+                        ;;
+        esac
+        case $2 in
+                integers) types="byte short int" ;;
+                floats) types="float double" ;;
+        esac
+        case $3 in
+                scalar) sca="--scalar" ;;
+                vector) sca="" ;;
+        esac
 
-        if cmp -s ../test/debug.manhattan result_check
-        then
-                echo "OK"
-        else
-                echo "FAILED"
-        fi
+        for type in $types
+        do
+                echo -n "Verifying $label1, $3, $type	... "
+                ./bench --runs 1 $sca $manh --type $type ../test/basic 2>&1 | \
+                awk -f filter.awk >result_check
 
-        echo -n "Verifying Manhattan, vectorized, $type... "
-        ./bench --manhattan --runs 1 --type $type ../test/basic 2>&1 | \
-        awk -f filter.awk >result_check
+                if cmp -s ../test/debug-$2.$1 result_check
+                then
+                        echo "OK"
+                else
+                        echo "FAILED"
+                fi
+        done
+}
 
-        if cmp -s ../test/debug.manhattan result_check
-        then
-                echo "OK"
-        else
-                echo "FAILED"
-        fi
-done
+
+check euclid integers scalar
+check euclid floats scalar
+check manhattan integers scalar
+check manhattan floats scalar
+
+check euclid integers vector
+check euclid floats vector
+check manhattan integers vector
+check manhattan floats vector
 
