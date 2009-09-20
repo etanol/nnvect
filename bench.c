@@ -162,13 +162,16 @@ int main (int argc, char **argv)
                (typelabel == NULL ? "float" : typelabel));
 
         trfilename = xstrcat(argv[0], ".t");
-        printf("Loading %s\n", trfilename);
+        printf("Loading %s\n\n", trfilename);
         train_db = load_db(trfilename, type, !want_scalar);
         free(trfilename);
+        print_db_info(train_db);
 
-        printf("Loading %s\n\n", argv[0]);
+        printf("\nLoading %s\n\n", argv[0]);
         db = load_db(argv[0], type, !want_scalar);
         memset(db->klass, 0, db->count * sizeof(int));
+        print_db_info(db);
+        printf("\n");
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,

@@ -180,6 +180,37 @@ struct db *load_db (const char *filename, enum valuetype type, int want_padding)
 }
 
 
+void print_db_info (struct db *db)
+{
+        int padcolumns;
+        size_t typesize, datasize, padsize;
+
+        typesize = 0;
+        switch (db->type)
+        {
+        case BYTE:    typesize = sizeof(char);    break;
+        case SHORT:   typesize = sizeof(short);   break;
+        case INT:     typesize = sizeof(int);     break;
+        case FLOAT:   typesize = sizeof(float);   break;
+        case DOUBLE:  typesize = sizeof(double);  break;
+        }
+
+        padcolumns = db->dimensions - db->real_dimensions;
+        padsize = db->count * padcolumns * typesize;
+        datasize = db->count * db->dimensions * typesize;
+
+        printf("    There are %d elements\n", db->count);
+        printf("    There are %d dimensions, of which %d are padding\n",
+               db->dimensions, padcolumns);
+        printf("    Class array is %u bytes in size\n",
+               db->count * sizeof(int));
+        printf("    Data array is %u bytes, of which %u (%.1f%%) are padding\n",
+               datasize, padsize, (padsize * 100.0f) / datasize);
+        printf("    Data array would be %u bytes without padding\n",
+               db->count * db->real_dimensions * typesize);
+}
+
+
 void free_db (struct db *db)
 {
         free(db->data);
