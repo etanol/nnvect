@@ -15,7 +15,9 @@ DECLARE(nn_short_seq_M);
 DECLARE(nn_int_seq_E);
 DECLARE(nn_int_seq_M);
 DECLARE(nn_float_seq_E);
+DECLARE(nn_float_seq_M);
 DECLARE(nn_double_seq_E);
+DECLARE(nn_double_seq_M);
 
 /* Vectorized versions defined at nnvect.c */
 DECLARE(nn_byte_vect_M);
@@ -24,7 +26,9 @@ DECLARE(nn_short_vect_M);
 //DECLARE(nn_int_vect_E);
 DECLARE(nn_int_vect_M);
 DECLARE(nn_float_vect_E);
+DECLARE(nn_float_vect_M);
 DECLARE(nn_double_vect_E);
+DECLARE(nn_double_vect_M);
 
 
 void nn (enum valuetype type, enum distancekind kind, int sequential,
@@ -68,10 +72,10 @@ void nn (enum valuetype type, enum distancekind kind, int sequential,
                         func = (sequential ? nn_int_seq_M : nn_int_vect_M);
                         break;
                 case FLOAT:
-                        func = NULL;
+                        func = (sequential ? nn_float_seq_M : nn_float_vect_M);
                         break;
                 case DOUBLE:
-                        func = NULL;
+                        func = (sequential ? nn_double_seq_M : nn_double_vect_M);
                         break;
                 }
                 break;

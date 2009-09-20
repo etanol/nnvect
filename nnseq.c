@@ -2,6 +2,7 @@
 
 #include <limits.h>
 #include <float.h>
+#include <math.h>
 
 
 /*****************************************************************************/
@@ -324,6 +325,76 @@ void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
                         }
                 }
                 debug("%d\t%d\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
+        }
+}
+
+
+/**************************  FLOATING POINT VALUES  **************************/
+
+void nn_float_seq_M (int dimensions, int trcount, float *trdata, int *trklass,
+                     int count, float *data, int *klass)
+{
+        int n, tn;
+        int i, ti;
+        int cl, d, idx;
+        float min_distance, dist;
+
+        debug("Class\tDist\tIndex ");
+        for (n = 0;  n < count;  n++)
+        {
+                i = n * dimensions;
+                min_distance = FLT_MAX;
+                cl = -1;
+                idx = -1;
+                for (tn = 0;  tn < trcount;  tn++)
+                {
+                        ti = tn * dimensions;
+                        dist = 0;
+                        for (d = 0;  d < dimensions;  d++)
+                                dist += fabs(data[i + d] - trdata[ti + d]);
+                        if (dist < min_distance)
+                        {
+                                min_distance = dist;
+                                cl = trklass[tn];
+                                idx = tn;
+                        }
+                }
+                debug("%d\t%f\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
+        }
+}
+
+
+void nn_double_seq_M (int dimensions, int trcount, double *trdata, int *trklass,
+                      int count, double *data, int *klass)
+{
+        int n, tn;
+        int i, ti;
+        int cl, d, idx;
+        double min_distance, dist;
+
+        debug("Class\tDist\tIndex ");
+        for (n = 0;  n < count;  n++)
+        {
+                i = n * dimensions;
+                min_distance = FLT_MAX;
+                cl = -1;
+                idx = -1;
+                for (tn = 0;  tn < trcount;  tn++)
+                {
+                        ti = tn * dimensions;
+                        dist = 0;
+                        for (d = 0;  d < dimensions;  d++)
+                                dist += fabs(data[i + d] - trdata[ti + d]);
+                        if (dist < min_distance)
+                        {
+                                min_distance = dist;
+                                cl = trklass[tn];
+                                idx = tn;
+                        }
+                }
+                debug("%d\t%lf\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
