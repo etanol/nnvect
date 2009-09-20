@@ -96,7 +96,7 @@ static void read_data (struct file *file, struct db *db)
                 while (*c != '\n')
                 {
                         dim = (int) strtol(c, &next, 10);
-                        i = lc * db->dimensions + dim;
+                        i = lc * db->dimensions + (dim - 1);
                         c = next + 1;
                         switch (db->type)
                         {
