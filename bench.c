@@ -10,16 +10,23 @@
 
 int main (int argc, char **argv)
 {
-        struct timeval start, finish;
+        int alen;
+        char *trfilename;
         struct db *db, *train_db;
+        struct timeval start, finish;
 
-        if (argc < 3)
-                quit("Not enough arguments");
+        if (argc < 2)
+                quit("No matrix file specified");
+
+        alen = strlen(argv[1]);
+        trfilename = xmalloc(alen + 4);
+        snprintf(trfilename, alen + 3, "%s.t", argv[1]);
+        printf("Loading %s\n", trfilename);
+        train_db = load_db(trfilename, FLOAT);
+        free(trfilename);
 
         printf("Loading %s\n", argv[1]);
-        train_db = load_db(argv[1], FLOAT);
-        printf("Loading %s\n", argv[2]);
-        db = load_db(argv[2], FLOAT);
+        db = load_db(argv[1], FLOAT);
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
