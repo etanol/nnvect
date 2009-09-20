@@ -15,6 +15,7 @@
 #define fatal(...)          print_message(__FILE__, __LINE__, 4, __VA_ARGS__)
 #define xmalloc(s)          allocate_memory(__FILE__, __LINE__, 0, (s))
 #define xmalloc_aligned(s)  allocate_memory(__FILE__, __LINE__, ALIGNMENT, (s))
+#define xstrcat(a, b)       string_concat(__FILE__, __LINE__, (a), (b))
 
 /* Debugging support */
 #ifdef DEBUG
@@ -31,5 +32,6 @@
 /* Functions doing real work, but not recommended to call directly */
 void  print_message   (const char *, int, int, const char *, ...);
 void *allocate_memory (const char *, int, size_t, size_t);
+char *string_concat   (const char *, int, const char *, const char *);
 
 #endif /* __nnvect_util */

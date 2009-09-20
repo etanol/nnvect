@@ -68,3 +68,22 @@ void *allocate_memory (const char *file, int line, size_t alignment,
         return mem;
 }
 
+
+char *string_concat (const char *file, int line, const char *a, const char *b)
+{
+        int len;
+        char *ab;
+
+        len = (a != NULL ? strlen(a) : 0) +
+              (b != NULL ? strlen(b) : 0);
+
+        if (len == 0)
+                return NULL;
+        len += 2;
+
+        ab = allocate_memory(file, line, 0, len);
+        snprintf(ab, len - 1, "%s%s", (a != NULL ? a : "\0"),
+                                      (b != NULL ? b : "\0"));
+        return ab;
+}
+
