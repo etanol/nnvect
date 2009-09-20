@@ -597,3 +597,40 @@ void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
         }
 }
 
+
+
+/******************************************************************************/
+/*                                                                            */
+/*                              BLOCKED VERSIONS                              */
+/*                                                                            */
+/******************************************************************************/
+
+
+/******************************  INTEGER VALUES  ******************************/
+
+void nn_byte_vec_B (int dimensions, int trcount, int trblockcount, char *trdata,
+                    int *trklass, int count, char *data, int *klass,
+                    unsigned int *distance) {}
+
+
+void nn_short_vec_B (int dimensions, int trcount, int trblockcount, short *trdata,
+                     int *trklass, int count, short *data, int *klass,
+                     unsigned int *distance) {}
+
+
+void nn_int_vec_B (int dimensions, int trcount, int trblockcount, int *trdata,
+                   int *trklass, int count, int *data, int *klass,
+                   unsigned int *distance) {}
+
+
+/**************************  FLOATING POINT VALUES  **************************/
+
+void nn_float_vec_B (int dimensions, int trcount, int trblockcount, float *trdata,
+                     int *trklass, int count, float *data, int *klass,
+                     float *distance) {}
+
+
+void nn_double_vec_B (int dimensions, int trcount, int trblockcount, double *trdata,
+                      int *trklass, int count, double *data, int *klass,
+                      double *distance) {}
+

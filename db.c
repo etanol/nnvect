@@ -126,10 +126,11 @@ static void read_data (struct file *file, struct db *db)
 }
 
 
-struct db *load_db (const char *filename, enum valuetype type, int want_padding)
+struct db *load_db (const char *filename, enum valuetype type,
+                    int max_block_size, int want_padding, int want_distances)
 {
         char *infoname;
-        int check_float, typesize, rowsize;
+        int check_float, typesize, rowsize, distsize;
         struct db *db;
         struct file file;
 
@@ -142,14 +143,32 @@ struct db *load_db (const char *filename, enum valuetype type, int want_padding)
         free(infoname);
 
         check_float = 0;
-        typesize = 0;
+        typesize = distsize = 0;
         switch (type)
         {
-        case BYTE:    typesize = sizeof(char);    check_float = 1;  break;
-        case SHORT:   typesize = sizeof(short);   check_float = 1;  break;
-        case INT:     typesize = sizeof(int);     check_float = 1;  break;
-        case FLOAT:   typesize = sizeof(float);   check_float = 0;  break;
-        case DOUBLE:  typesize = sizeof(double);  check_float = 0;  break;
+        case BYTE:
+                typesize = sizeof(char);
+                distsize = sizeof(unsigned int);
+                check_float = 1;
+                break;
+        case SHORT:
+                typesize = sizeof(short);
+                distsize = sizeof(unsigned int);
+                check_float = 1;
+                break;
+        case INT:
+                typesize = sizeof(int);
+                distsize = sizeof(unsigned int);
+                check_float = 1;
+                break;
+        case FLOAT:
+                typesize = distsize = sizeof(float);
+                check_float = 0;
+                break;
+        case DOUBLE:
+                typesize = distsize = sizeof(double);
+                check_float = 0;
+                break;
         }
 
         if (check_float && db->has_floats)
@@ -172,6 +191,16 @@ struct db *load_db (const char *filename, enum valuetype type, int want_padding)
         memset(db->klass, 0, db->count * sizeof(int));
         memset(db->data, 0, db->count * rowsize);
 
+        if (max_block_size > 0 && db->count * rowsize > max_block_size)
+                db->block_items = max_block_size / rowsize;
+        else
+                db->block_items = 0;
+
+        if (want_distances)
+                db->distance = xmalloc(db->count * distsize);
+        else
+                db->distance = NULL;
+
         open_file(filename, &file);
         read_data(&file, db);
         close_file(&file);
@@ -183,7 +212,7 @@ struct db *load_db (const char *filename, enum valuetype type, int want_padding)
 void print_db_info (struct db *db)
 {
         int padcolumns;
-        unsigned int typesize, datasize, padsize;
+        unsigned int typesize, datasize, padsize, blocksize;
 
         typesize = 0;
         switch (db->type)
@@ -198,6 +227,7 @@ void print_db_info (struct db *db)
         padcolumns = db->dimensions - db->real_dimensions;
         padsize = db->count * padcolumns * typesize;
         datasize = db->count * db->dimensions * typesize;
+        blocksize = db->block_items * db->dimensions * typesize;
 
         printf("    There are %d elements\n", db->count);
         printf("    There are %d dimensions, of which %d are padding\n",
@@ -208,11 +238,18 @@ void print_db_info (struct db *db)
                datasize, padsize, (padsize * 100.0f) / datasize);
         printf("    Data array would be %u bytes without padding\n",
                db->count * db->real_dimensions * typesize);
+        if (db->block_items > 0)
+                printf("    Each block has %d elements (%u bytes)\n",
+                       db->block_items, blocksize);
+        else
+                printf("    Blocking not requested or needed\n");
 }
 
 
 void free_db (struct db *db)
 {
+        if (db->distance != NULL)
+                free(db->distance);
         free(db->data);
         free(db->klass);
         free(db);

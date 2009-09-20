@@ -7,14 +7,16 @@ struct db
 {
         enum valuetype type;
         int count;
+        int block_items;
         int dimensions;
         int real_dimensions;
         int has_floats;
         int *klass;
         void *data;
+        void *distance;
 };
 
-struct db *load_db       (const char *, enum valuetype, int);
+struct db *load_db       (const char *, enum valuetype, int, int, int);
 void       print_db_info (struct db *);
 void       free_db       (struct db *);
 

@@ -11,9 +11,10 @@
 
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "ho:r:st:";
+static char OptString[] = "b:ho:r:st:";
 
 static struct option LongOpts[] = {
+        { "blocksize", required_argument, NULL, 'b' },
         { "help",      no_argument,       NULL, 'h' },
         { "output",    required_argument, NULL, 'o' },
         { "runs",      required_argument, NULL, 'r' },
@@ -28,20 +29,25 @@ static void usage (const char *progname)
         fprintf(stderr,
 "Usage: %s [options] dbfile\n\n"
 "Where possible options are:\n\n"
-"    -h, --help         This help.\n\n"
-"    -o, --output=FILE  Save the calculated results to FILE in order to compare\n"
-"                       them against valid solutions.\n\n"
-"    -r, --runs=N       Execute N runs for statistical purposes.  In the absence\n"
-"                       of this option, three runs are performed.  This parameter\n"
-"                       is ignored when combined with \"-d\" or \"--dump\".\n\n"
-"    -s, --scalar       Run a non-vectorized version of the algorithm instead\n"
-"                       of the vectorized one.\n\n"
-"    -t, --type=TYPE    Load data as the given TYPE.  Possible types are:\n"
-"                           byte    (%d bytes)\n"
-"                           short   (%d bytes)\n"
-"                           int     (%d bytes)\n"
-"                           float   (%d bytes)\n"
-"                           double  (%d bytes)\n\n"
+"    -b, --blocksize=SIZE  The maximum amount of bytes to read from the\n"
+"                          training array at once.  Setting this value to\n"
+"                          zero (the default) selects a non-blocking\n"
+"                          implementation.\n\n"
+"    -h, --help            This help.\n\n"
+"    -o, --output=FILE     Save the calculated results to FILE in order to\n"
+"                          compare them against valid solutions.\n\n"
+"    -r, --runs=N          Execute N runs for statistical purposes.  In the\n"
+"                          absence of this option, three runs are performed.\n"
+"                          This parameter is ignored when combined with\n"
+"                          \"-d\" or \"--dump\".\n\n"
+"    -s, --scalar          Run a non-vectorized version of the algorithm\n"
+"                          instead of the vectorized one.\n\n"
+"    -t, --type=TYPE       Load data as the given TYPE.  Possible types are:\n"
+"                              byte    (%d bytes)\n"
+"                              short   (%d bytes)\n"
+"                              int     (%d bytes)\n"
+"                              float   (%d bytes)\n"
+"                              double  (%d bytes)\n\n"
 "NOTE: Just a single file needs to be specified as input.  However, the files\n"
 "      \"dbfile.info\", \"dbfile.t\" and \"dbfile.t.info\" are assumed to reside\n"
 "      under the same path as \"dbfile\".\n\n", progname,
@@ -66,12 +72,14 @@ int main (int argc, char **argv)
 {
         char *progname, *trfilename, *dumpfile, *typelabel;
         int cmdopt, has_opts, want_scalar, r, runs;
+        int block_limit;
         enum valuetype type;
         struct db *db, *train_db;
         struct timestats *ts;
 
         progname = argv[0];
         dumpfile = NULL;
+        block_limit = 0;
         runs = 3;
         type = FLOAT;
         typelabel = NULL;
@@ -85,6 +93,14 @@ int main (int argc, char **argv)
                 {
                 case -1:
                         has_opts = 0;
+                        break;
+                case 'b':
+                        block_limit = atoi(optarg);
+                        if (block_limit < 0)
+                        {
+                                block_limit = 0;
+                                warning("Invalid blocksize: %s", optarg);
+                        }
                         break;
                 case 'h':
                         usage(progname);
@@ -152,13 +168,13 @@ int main (int argc, char **argv)
         trfilename = xstrcat(argv[0], ".t");
         printf("Loading %s as %ss\n\n", trfilename,
                (typelabel == NULL ? "float" : typelabel));
-        train_db = load_db(trfilename, type, !want_scalar);
+        train_db = load_db(trfilename, type, block_limit, !want_scalar, 0);
         free(trfilename);
         print_db_info(train_db);
 
         printf("\nLoading %s as %ss\n\n", argv[0],
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(argv[0], type, !want_scalar);
+        db = load_db(argv[0], type, 0, !want_scalar, train_db->block_items > 0);
         memset(db->klass, 0, db->count * sizeof(int));
         print_db_info(db);
         printf("\n");
