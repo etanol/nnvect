@@ -1,77 +1,69 @@
-#include <sys/time.h>
+#include "util.h"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "util.h"
 
 
-void warning (const char *msg, ...)
+void print_message (const char *file, int line, int severity,
+                    const char *message, ...)
 {
         va_list args;
+        char *label;
+        char errmsg[72];
 
-        fputs("WARNING: ", stderr);
-        va_start(args, msg);
-        vfprintf(stderr, msg, args);
+        errmsg[0] = '\0';
+        switch (severity)
+        {
+        case 0: label = "DEBUG";  break;
+        case 1: label = "WARNING";  break;
+        case 3: label = "ABORT";  break;
+        case 2:
+                label = "ERROR";
+                strerror_r(errno, errmsg, 71);
+                break;
+        case 4:
+                label = "FATAL";
+                strerror_r(errno, errmsg, 71);
+                break;
+        default:
+                label = "???";
+        }
+
+        fprintf(stderr, "%s at %s:%d  -  ", label, file, line);
+        va_start(args, message);
+        vfprintf(stderr, message, args);
         va_end(args);
+
+        if (errmsg[0] != '\0')
+                fprintf(stderr, ": %s", errmsg);
         fputs(".\n", stderr);
+
+        if (severity > 2)
+                exit(EXIT_FAILURE);
 }
 
 
-void error (const char *msg, ...)
+void *allocate_memory (const char *file, int line, size_t alignment,
+                       size_t bytes)
 {
-        va_list args;
-        int errnum;
-        char errmsg[72];
+        void *mem;
 
-        errnum = errno;
-        fputs("ERROR: ", stderr);
-        va_start(args, msg);
-        vfprintf(stderr, msg, args);
-        va_end(args);
-        if (errnum != 0)
-        {
-                strerror_r(errnum, errmsg, 71);
-                fprintf(stderr, ": %s.\n", errmsg);
-        }
+#ifdef __APPLE__
+        mem = malloc(bytes);
+#else
+        if (alignment > 0)
+                mem = malloc(bytes);
         else
-                fputs(".\n", stderr);
-}
+                mem = memalign(alignment, bytes);
+#endif
 
-
-void fatal (const char *msg, ...)
-{
-        va_list args;
-        int errnum;
-        char errmsg[72];
-
-        errnum = errno;
-        fputs("FATAL ERROR: ", stderr);
-        va_start(args, msg);
-        vfprintf(stderr, msg, args);
-        va_end(args);
-        if (errnum != 0)
-        {
-                strerror_r(errnum, errmsg, 71);
-                fprintf(stderr, ": %s.\n", errmsg);
-        }
-        else
-                fputs(".\n", stderr);
-
-        exit(EXIT_FAILURE);
-}
-
-
-void *do_malloc (size_t bytes, const char *file, int line)
-{
-        void *addr;
-
-        addr = malloc(bytes + ALIGN_BOUNDARY);
-        if (addr == NULL)
-                fatal("Unable to allocate %d bytes at %s line %d",
-                      bytes, file, line);
-        memset(addr, 0, bytes + ALIGN_BOUNDARY);
-        return (void *) (((unsigned int) addr + LOWER_MASK) & UPPER_MASK);
+        if (mem == NULL)
+                print_message(file, line, 4, "Unable to allocate %d byte%s",
+                              bytes, (alignment > 0 ? "s with %d byte alignment"
+                                                    : "s"));
+        return mem;
 }
 

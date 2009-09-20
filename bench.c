@@ -1,52 +1,50 @@
+#include "util.h"
+#include "db.h"
+#include "nn.h"
+
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "util.h"
+#include <string.h>
 
-extern void load_db (char *, float **, int **, int *, int *);
-extern void nn_float (int, int, float *, int *, int, float *, int *);
-extern void nn_floats (int, int, float *, int *, int, float *, int *);
 
 int main (int argc, char **argv)
 {
         struct timeval start, finish;
-        float *features, *train_features;
-        int *classes, *train_classes, *computed_classes;
-        int dimensions, train_dimensions;
-        int count, train_count;
-        int i;
+        struct db *db, *train_db;
 
         if (argc < 3)
-                fatal("Not enough arguments");
+                quit("Not enough arguments");
 
         printf("Loading %s\n", argv[1]);
-        load_db(argv[1], &train_features, &train_classes, &train_dimensions,
-                &train_count);
+        train_db = load_db(argv[1], FLOAT);
         printf("Loading %s\n", argv[2]);
-        load_db(argv[2], &features, &classes, &dimensions, &count);
+        db = load_db(argv[2], FLOAT);
 
-        printf("Dimensions %d, train dimensions %d\n", dimensions, train_dimensions);
-        if (dimensions != train_dimensions)
-                fatal("Dimensions do not match (%d != %d)", dimensions,
-                      train_dimensions);
+        if (db->dimensions != train_db->dimensions)
+                quit("Dimensions do not match (%d != %d)", db->dimensions,
+                      train_db->dimensions);
 
-        computed_classes = calloc(count, sizeof(int));
-        if (computed_classes == NULL)
-                fatal("Not enough memory for computed classes");
+        /* Ignore class data from the file to evaluate */
+        memset(db->klass, 0, db->count * sizeof(int));
 
         printf("NN serial\n");
         gettimeofday(&start, NULL);
-        nn_float(dimensions, train_count, train_features, train_classes, count,
-                 features, computed_classes);
+        nn_float(db->dimensions, train_db->count, train_db->data,
+                 train_db->klass, db->count, db->data, db->klass);
         gettimeofday(&finish, NULL);
         printf("NN took %fs\n", elapsed_time(&start, &finish));
 
         printf("NN vector\n");
         gettimeofday(&start, NULL);
-        nn_floats(dimensions, train_count, train_features, train_classes, count,
-                  features, computed_classes);
+        nn_floats(db->dimensions, train_db->count, train_db->data,
+                  train_db->klass, db->count, db->data, db->klass);
         gettimeofday(&finish, NULL);
         printf("NN took %fs\n", elapsed_time(&start, &finish));
 
+
+        free_db(train_db);
+        free_db(db);
         /*
         printf("Verifying\n");
         for (i = 0;  i < count;  i++)

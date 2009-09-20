@@ -1,145 +1,209 @@
+#include "db.h"
+#include "util.h"
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
-#include "util.h"
 
-
-static inline char *next_line (char *data, int *position, size_t limit)
+struct file
 {
-        char *line;
-        int i;
-
-        i = *position;
-        if (i < limit && (data[i] == '\n' || data[i] == '\0'))
-        {
-                data[i] = '\0';
-                i++;
-        }
-        if (i >= limit)
-        {
-                *position = i;
-                return NULL;
-        }
-
-        line = &data[i];
-        while (i < limit && data[i] != '\n' && data[i] != '\0')
-                i++;
-        *position = i;
-        if (i >= limit)
-                /* No line jump at the last line of the file; normally caused by
-                 * a really broken text editor.  There's not much to do about
-                 * it */
-                return NULL;
-
-        data[i] = '\0';
-        return line;
-}
+        int handle;
+        off_t size;
+        char *name;
+        char *data;
+};
 
 
-static inline char *skip_target (char *str)
+static void open_file (const char *name, struct file *f)
 {
-        while (isspace(*str))
-                str++;
-        while (!isspace(*str))
-                str++;
-
-        return str;
-}
-
-
-static inline char *skip_element (char *str)
-{
-        while (*str != ':')
-                str++;
-        str++;
-        while (isspace(*str))
-                str++;
-        while (*str && !isspace(*str))
-                str++;
-
-        return str;
-}
-
-
-void load_db (char *filename, float **features, int **classes,
-              int *dimensions, int *item_count)
-{
-        int fd, e, pos;
-        int count, cl, index, dims;
-        int rowsize;
-        float value;
-        char *data, *line;
+        int e;
         struct stat s;
 
-        fd = open(filename, O_RDONLY);
-        if (fd == -1)
-                fatal("Could not open '%s'", filename);
+        f->name = xmalloc(strlen(name) + 1);
+        strcpy(f->name, name);
 
-        e = fstat(fd, &s);
+        f->handle = open(name, O_RDONLY);
+        if (f->handle == -1)
+                fatal("Could not open '%s'", name);
+
+        e = fstat(f->handle, &s);
         if (e == -1)
-                fatal("Could not stat '%s'", filename);
+                fatal("Could not stat '%s'", name);
 
-        data = mmap(NULL, s.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-        if (data == MAP_FAILED)
-                fatal("Could not map '%s'", filename);
+        f->size = s.st_size;
+        f->data = mmap(NULL, s.st_size, PROT_READ, MAP_PRIVATE, f->handle, 0);
+        if (f->data == MAP_FAILED)
+                fatal("Could not map '%s'", name);
+}
 
-        /* First pass to guess the dimensions of the array : number of lines and
-         * maximum index */
-        count = 0;
-        dims = 0;
-        pos = 0;
-        line = next_line(data, &pos, s.st_size);
-        while (line != NULL)
+
+static void close_file (struct file *f)
+{
+        int e;
+
+        e = munmap(f->data, f->size);
+        if (e == -1)
+                error("Unmapping file '%s'", f->name);
+
+        e = close(f->handle);
+        if (e == -1)
+                error("Closing file '%s'", f->name);
+
+        free(f->name);
+}
+
+
+static void read_info (struct file *file, struct db *db)
+{
+        char *line, *next;
+
+        /* Read the values in order, no need to check for the labels.  If the
+         * order ever changes in the Python analyzer, it can also be changed
+         * here */
+        line = file->data;
+        db->count = (int) strtol(&line[9], &next, 10);
+        line = next + 1;
+        db->real_dimensions = (int) strtol(&line[9], &next, 10);
+        line = next + 1;
+        db->has_floats = line[9] == 'y';
+}
+
+
+static void read_data (struct file *file, struct db *db)
+{
+        char *c, *next;
+        int dim, i;
+        int lc;  /* Line Count so far */
+
+        c = file->data;
+        lc = 0;
+
+        /* Each iteration parses a single line */
+        while (lc < db->count)
         {
-                count++;
-                line = skip_target(line);
-                while (sscanf(line, "%d:%*f", &index) == 1)
+                while (*c == ' ' || *c == '\t')
+                        c++;
+                db->klass[lc] = (int) strtol(c, &next, 10);
+                c = next;
+                while (*c == ' ' || *c == '\t')
+                        c++;
+                while (*c != '\n')
                 {
-                        if (index > dims)
-                                dims = index;
-                        line = skip_element(line);
+                        dim = (int) strtol(c, &next, 10);
+                        i = lc * db->dimensions + dim;
+                        c = next + 1;
+                        switch (db->type)
+                        {
+                        case BYTE:
+                                ((char *) db->data)[i] = (char) strtol(c, &next, 10);
+                                break;
+                        case SHORT:
+                                ((short *) db->data)[i] = (short) strtol(c, &next, 10);
+                                break;
+                        case INTEGER:
+                                ((int *) db->data)[i] = (int) strtol(c, &next, 10);
+                                break;
+                        case FLOAT:
+                                ((float *) db->data)[i] = (float) strtod(c, &next);
+                                break;
+                        case DOUBLE:
+                                ((double *) db->data)[i] = strtod(c, &next);
+                                break;
+                        }
+                        c = next;
+                        while (*c == ' ' || *c == '\t')
+                                c++;
                 }
-                line = next_line(data, &pos, s.st_size);
+                lc++;
+                c++;
+        }
+}
+
+
+struct db *load_db (const char *filename, enum datatype type)
+{
+        char *infoname;
+        int len, rowsize = 0;
+        struct db *db;
+        struct file file;
+
+        db = xmalloc(sizeof(struct db));
+
+        len = strlen(filename);
+        infoname = xmalloc(len + 7);
+        snprintf(infoname, len + 6, "%s.info", filename);
+        open_file(infoname, &file);
+        read_info(&file, db);
+        close_file(&file);
+        free(infoname);
+
+        db->type = type;
+        switch (type)
+        {
+        case BYTE:
+                if (db->has_floats)
+                        quit("Database has floating point numbers but byte integers were requested");
+                rowsize = PADDED(db->real_dimensions * sizeof(char));
+                db->dimensions = rowsize / sizeof(char);
+                break;
+        case SHORT:
+                if (db->has_floats)
+                        quit("Database has floating point numbers but short integers were requested");
+                rowsize = PADDED(db->real_dimensions * sizeof(short));
+                db->dimensions = rowsize / sizeof(short);
+                break;
+        case INTEGER:
+                if (db->has_floats)
+                {
+                        if (sizeof(int) == sizeof(float))
+                        {
+                                warning("Using FLOAT instead of INTEGER due to database requirement");
+                                rowsize = PADDED(db->real_dimensions * sizeof(float));
+                                db->dimensions = rowsize / sizeof(float);
+                                db->type = FLOAT;
+                        }
+                        else
+                                quit("Database has floating point numbers but integers were requested");
+                }
+                else
+                {
+                        rowsize = PADDED(db->real_dimensions * sizeof(int));
+                        db->dimensions = rowsize / sizeof(int);
+                }
+                break;
+        case FLOAT:
+                rowsize = PADDED(db->real_dimensions * sizeof(float));
+                db->dimensions = rowsize / sizeof(int);
+                break;
+        case DOUBLE:
+                rowsize = PADDED(db->real_dimensions * sizeof(float));
+                db->dimensions = rowsize / sizeof(int);
+                break;
         }
 
-        /* Pad dimensions to ALIGN_BOUNDARY */
-        rowsize = (dims * sizeof(float) + LOWER_MASK) & UPPER_MASK;
-        dims = rowsize / sizeof(float);
-        *dimensions = dims;
-        *item_count = count;
-        *features = malloc_aligned(count * rowsize);
-        *classes = calloc(count, sizeof(int));
-        if (*classes == NULL)
-                fatal("Could not allocate classes array");
+        db->klass = xmalloc(db->count * sizeof(int));
+        db->data = xmalloc_aligned(db->count * rowsize);
+        memset(db->klass, 0, db->count * sizeof(int));
+        memset(db->data, 0, db->count * rowsize);
 
-        /* Second pass to load the values into the array */
-        count = 0;
-        pos = 0;
-        line = next_line(data, &pos, s.st_size);
-        while (line != NULL)
-        {
-                sscanf(line, "%d", &cl);
-                (*classes)[count] = cl;
-                line = skip_target(line);
-                while (sscanf(line, "%d:%f", &index, &value) == 2)
-                {
-                        (*features)[count * dims + index - 1] = value;
-                        line = skip_element(line);
-                }
-                count++;
-                line = next_line(data, &pos, s.st_size);
-        }
+        open_file(filename, &file);
+        read_data(&file, db);
+        close_file(&file);
 
-        e = munmap(data, s.st_size);
-        if (e == -1)
-                error("Unmapping file '%s'", filename);
-        e = close(fd);
-        if (e == -1)
-                error("Closing file '%s'", filename);
+        return db;
+}
+
+
+void free_db (struct db *db)
+{
+        free(db->data);
+        free(db->klass);
+        free(db);
 }
 
