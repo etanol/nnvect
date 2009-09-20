@@ -168,20 +168,21 @@ int main (int argc, char **argv)
 
         printf("Loading %s\n\n", argv[0]);
         db = load_db(argv[0], type, !want_scalar);
+        memset(db->klass, 0, db->count * sizeof(int));
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
                       train_db->dimensions);
 
-        ts = stats_prepare(runs);
+        ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
         {
                 printf("Run %d of %d\n", r + 1, runs);
-                stats_start(ts);
+                start_run(ts);
                 nn(type, kind, want_scalar, train_db, db);
-                stats_stop(ts);
+                stop_run(ts);
         }
-        stats_calculate(ts, &sts);
+        calculate_stats(ts, &sts);
         printf("\nStatistics\n\n");
         printf("- Minimum time: %lf secs\n", sts.minimum);
         printf("- Maximum time: %lf secs\n", sts.maximum);

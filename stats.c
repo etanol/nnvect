@@ -23,7 +23,7 @@ static inline double elapsed_time (struct timeval *begin, struct timeval *end)
 }
 
 
-struct timestats *stats_prepare (int runs)
+struct timestats *prepare_stats (int runs)
 {
         struct timestats *ts;
 
@@ -35,14 +35,14 @@ struct timestats *stats_prepare (int runs)
 }
 
 
-void stats_start (struct timestats *ts)
+void start_run (struct timestats *ts)
 {
         if (ts->current < ts->runs)
                 gettimeofday(&ts->reference, NULL);
 }
 
 
-void stats_stop (struct timestats *ts)
+void stop_run (struct timestats *ts)
 {
         struct timeval t;
 
@@ -56,7 +56,7 @@ void stats_stop (struct timestats *ts)
 }
 
 
-void stats_calculate (struct timestats *ts, struct stats *sts)
+void calculate_stats (struct timestats *ts, struct stats *sts)
 {
         int i;
         double diff;

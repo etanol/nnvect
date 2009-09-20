@@ -13,9 +13,9 @@ struct stats
         double deviation;
 };
 
-struct timestats *stats_prepare   (int);
-void              stats_start     (struct timestats *);
-void              stats_stop      (struct timestats *);
-void              stats_calculate (struct timestats *, struct stats *);
+struct timestats *prepare_stats   (int);
+void              start_run       (struct timestats *);
+void              stop_run        (struct timestats *);
+void              calculate_stats (struct timestats *, struct stats *);
 
 #endif /* __nnvect_stats */
