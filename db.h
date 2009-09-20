@@ -14,7 +14,7 @@ struct db
         void *data;
 };
 
-struct db *load_db (const char *, enum datatype);
+struct db *load_db (const char *, enum datatype, int);
 void       free_db (struct db *);
 
 #endif /* __nnvect_db */

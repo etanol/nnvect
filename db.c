@@ -126,10 +126,10 @@ static void read_data (struct file *file, struct db *db)
 }
 
 
-struct db *load_db (const char *filename, enum datatype type)
+struct db *load_db (const char *filename, enum datatype type, int want_padding)
 {
         char *infoname;
-        int rowsize = 0;
+        int check_float, typesize, rowsize;
         struct db *db;
         struct file file;
 
@@ -141,52 +141,34 @@ struct db *load_db (const char *filename, enum datatype type)
         close_file(&file);
         free(infoname);
 
-        db->type = type;
+        check_float = 0;
+        typesize = 0;
         switch (type)
         {
-        case BYTE:
-                if (db->has_floats)
-                        quit("Database has floating point numbers but byte integers were requested");
-                rowsize = PADDED(db->real_dimensions * sizeof(char));
-                db->dimensions = rowsize / sizeof(char);
-                break;
-        case SHORT:
-                if (db->has_floats)
-                        quit("Database has floating point numbers but short integers were requested");
-                rowsize = PADDED(db->real_dimensions * sizeof(short));
-                db->dimensions = rowsize / sizeof(short);
-                break;
-        case INTEGER:
-                if (db->has_floats)
-                {
-                        if (sizeof(int) == sizeof(float))
-                        {
-                                warning("Using FLOAT instead of INTEGER due to database requirement");
-                                rowsize = PADDED(db->real_dimensions * sizeof(float));
-                                db->dimensions = rowsize / sizeof(float);
-                                db->type = FLOAT;
-                        }
-                        else
-                                quit("Database has floating point numbers but integers were requested");
-                }
-                else
-                {
-                        rowsize = PADDED(db->real_dimensions * sizeof(int));
-                        db->dimensions = rowsize / sizeof(int);
-                }
-                break;
-        case FLOAT:
-                rowsize = PADDED(db->real_dimensions * sizeof(float));
-                db->dimensions = rowsize / sizeof(float);
-                break;
-        case DOUBLE:
-                rowsize = PADDED(db->real_dimensions * sizeof(double));
-                db->dimensions = rowsize / sizeof(double);
-                break;
+        case BYTE:    typesize = sizeof(char);    check_float = 1;  break;
+        case SHORT:   typesize = sizeof(short);   check_float = 1;  break;
+        case INTEGER: typesize = sizeof(int);     check_float = 1;  break;
+        case FLOAT:   typesize = sizeof(float);   check_float = 0;  break;
+        case DOUBLE:  typesize = sizeof(double);  check_float = 0;  break;
         }
 
+        if (check_float && db->has_floats)
+                quit("Database has floating point numbers but an integer type was requested");
+
+        if (want_padding)
+        {
+                rowsize = PADDED(db->real_dimensions * typesize);
+                db->dimensions = rowsize / typesize;
+                db->data = xmalloc_aligned(db->count * rowsize);
+        }
+        else
+        {
+                rowsize = db->real_dimensions * typesize;
+                db->dimensions = db->real_dimensions;
+                db->data = xmalloc(db->count * rowsize);
+        }
+        db->type = type;
         db->klass = xmalloc(db->count * sizeof(int));
-        db->data = xmalloc_aligned(db->count * rowsize);
         memset(db->klass, 0, db->count * sizeof(int));
         memset(db->data, 0, db->count * rowsize);
 

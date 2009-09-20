@@ -134,11 +134,11 @@ int main (int argc, char **argv)
 
         trfilename = xstrcat(argv[0], ".t");
         printf("Loading %s as %s\n", trfilename, typelabel);
-        train_db = load_db(trfilename, type);
+        train_db = load_db(trfilename, type, !want_sequential);
         free(trfilename);
 
         printf("Loading %s as %s\n\n", argv[0], typelabel);
-        db = load_db(argv[0], type);
+        db = load_db(argv[0], type, !want_sequential);
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
