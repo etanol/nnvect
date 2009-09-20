@@ -88,6 +88,8 @@ echo
 echo "====  TESTING  ===="
 run_test simple basic
 run_test simple large
+run_test unroll2 basic
+run_test unroll2 large
 run_test unroll4 basic
 run_test unroll4 large
 
