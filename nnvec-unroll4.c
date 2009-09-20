@@ -45,10 +45,7 @@ void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
                         ti2 = (tn + 1) * dimensions;
                         ti3 = (tn + 2) * dimensions;
                         ti4 = (tn + 3) * dimensions;
-                        dist1 = _mm_setzero_si128();
-                        dist2 = _mm_setzero_si128();
-                        dist3 = _mm_setzero_si128();
-                        dist4 = _mm_setzero_si128();
+                        dist1 = dist2 = dist3 = dist4 = _mm_setzero_si128();
                         for (d = 0;  d < dimensions;  d += 16)
                         {
                                 vec = _mm_load_si128((__m128i *) &data[i + d]);
@@ -64,14 +61,10 @@ void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
                                 mask2 = _mm_cmplt_epi8(tmp2, _mm_setzero_si128());
                                 mask3 = _mm_cmplt_epi8(tmp3, _mm_setzero_si128());
                                 mask4 = _mm_cmplt_epi8(tmp4, _mm_setzero_si128());
-                                tmp1 = _mm_xor_si128(tmp1, mask1);
-                                tmp2 = _mm_xor_si128(tmp2, mask2);
-                                tmp3 = _mm_xor_si128(tmp3, mask3);
-                                tmp4 = _mm_xor_si128(tmp4, mask4);
-                                tmp1 = _mm_sub_epi8(tmp1, mask1);
-                                tmp2 = _mm_sub_epi8(tmp2, mask2);
-                                tmp3 = _mm_sub_epi8(tmp3, mask3);
-                                tmp4 = _mm_sub_epi8(tmp4, mask4);
+                                tmp1 = _mm_sub_epi8(_mm_xor_si128(tmp1, mask1), mask1);
+                                tmp2 = _mm_sub_epi8(_mm_xor_si128(tmp2, mask2), mask2);
+                                tmp3 = _mm_sub_epi8(_mm_xor_si128(tmp3, mask3), mask3);
+                                tmp4 = _mm_sub_epi8(_mm_xor_si128(tmp4, mask4), mask4);
                                 tmp1 = _mm_maddubs_epi16(tmp1, tmp1);
                                 tmp2 = _mm_maddubs_epi16(tmp2, tmp2);
                                 tmp3 = _mm_maddubs_epi16(tmp3, tmp3);
@@ -117,7 +110,7 @@ void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
                         }
                         if (sdist4[0] < min_distance)
                         {
-                                min_distance = sdist3[0];
+                                min_distance = sdist4[0];
                                 cl = trklass[tn + 3];
                                 idx = tn + 3;
                         }
@@ -414,10 +407,7 @@ void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
                         ti2 = (tn + 1) * dimensions;
                         ti3 = (tn + 2) * dimensions;
                         ti4 = (tn + 3) * dimensions;
-                        dist1 = _mm_setzero_ps();
-                        dist2 = _mm_setzero_ps();
-                        dist3 = _mm_setzero_ps();
-                        dist4 = _mm_setzero_ps();
+                        dist1 = dist2 = dist3 = dist4 = _mm_setzero_ps();
                         for (d = 0;  d < dimensions;  d += 4)
                         {
                                 vec = _mm_load_ps(&data[i + d]);
@@ -532,10 +522,7 @@ void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
                         ti2 = (tn + 1) * dimensions;
                         ti3 = (tn + 2) * dimensions;
                         ti4 = (tn + 3) * dimensions;
-                        dist1 = _mm_setzero_pd();
-                        dist2 = _mm_setzero_pd();
-                        dist3 = _mm_setzero_pd();
-                        dist4 = _mm_setzero_pd();
+                        dist1 = dist2 = dist3 = dist4 = _mm_setzero_pd();
                         for (d = 0;  d < dimensions;  d += 2)
                         {
                                 vec = _mm_load_pd(&data[i + d]);
@@ -557,9 +544,9 @@ void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
                                 dist4 = _mm_add_pd(dist4, tmp4);
                         }
                         _mm_store_pd(sdist1, dist1);
-                        _mm_store_pd(sdist2, dist1);
-                        _mm_store_pd(sdist3, dist1);
-                        _mm_store_pd(sdist4, dist1);
+                        _mm_store_pd(sdist2, dist2);
+                        _mm_store_pd(sdist3, dist3);
+                        _mm_store_pd(sdist4, dist4);
                         if (sdist1[0] + sdist1[1] < min_distance)
                         {
                                 min_distance = sdist1[0] + sdist1[1];
@@ -589,7 +576,7 @@ void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
                 {
                         ti1 = tn * dimensions;
                         dist1 = _mm_setzero_pd();
-                        for (d = 0;  d < dimensions;  d += 4)
+                        for (d = 0;  d < dimensions;  d += 2)
                         {
                                 vec = _mm_load_pd(&data[i + d]);
                                 tvec1 = _mm_load_pd(&trdata[ti1 + d]);
@@ -767,14 +754,10 @@ void nn_short_vec_M (int dimensions, int trcount, short *trdata, int *trklass,
                                 mask2 = _mm_srai_epi16(tmp2, 15);
                                 mask3 = _mm_srai_epi16(tmp3, 15);
                                 mask4 = _mm_srai_epi16(tmp4, 15);
-                                tmp1 = _mm_xor_si128(tmp1, mask1);
-                                tmp2 = _mm_xor_si128(tmp2, mask2);
-                                tmp3 = _mm_xor_si128(tmp3, mask3);
-                                tmp4 = _mm_xor_si128(tmp4, mask4);
-                                tmp1 = _mm_sub_epi16(tmp1, mask1);
-                                tmp2 = _mm_sub_epi16(tmp2, mask2);
-                                tmp3 = _mm_sub_epi16(tmp3, mask3);
-                                tmp4 = _mm_sub_epi16(tmp4, mask4);
+                                tmp1 = _mm_sub_epi16(_mm_xor_si128(tmp1, mask1), mask1);
+                                tmp2 = _mm_sub_epi16(_mm_xor_si128(tmp2, mask2), mask2);
+                                tmp3 = _mm_sub_epi16(_mm_xor_si128(tmp3, mask3), mask3);
+                                tmp4 = _mm_sub_epi16(_mm_xor_si128(tmp4, mask4), mask4);
                                 dist1 = _mm_adds_epu16(dist1, tmp1);
                                 dist2 = _mm_adds_epu16(dist2, tmp2);
                                 dist3 = _mm_adds_epu16(dist3, tmp3);
@@ -897,14 +880,10 @@ void nn_int_vec_M (int dimensions, int trcount, int *trdata, int *trklass,
                                 mask2 = _mm_srai_epi32(tmp2, 31);
                                 mask3 = _mm_srai_epi32(tmp3, 31);
                                 mask4 = _mm_srai_epi32(tmp4, 31);
-                                tmp1 = _mm_xor_si128(tmp1, mask1);
-                                tmp2 = _mm_xor_si128(tmp2, mask2);
-                                tmp3 = _mm_xor_si128(tmp3, mask3);
-                                tmp4 = _mm_xor_si128(tmp4, mask4);
-                                tmp1 = _mm_sub_epi32(tmp1, mask1);
-                                tmp2 = _mm_sub_epi32(tmp2, mask2);
-                                tmp3 = _mm_sub_epi32(tmp3, mask3);
-                                tmp4 = _mm_sub_epi32(tmp4, mask4);
+                                tmp1 = _mm_sub_epi32(_mm_xor_si128(tmp1, mask1), mask1);
+                                tmp2 = _mm_sub_epi32(_mm_xor_si128(tmp2, mask2), mask2);
+                                tmp3 = _mm_sub_epi32(_mm_xor_si128(tmp3, mask3), mask3);
+                                tmp4 = _mm_sub_epi32(_mm_xor_si128(tmp4, mask4), mask4);
                                 dist1 = _mm_add_epi32(dist1, tmp1);
                                 dist2 = _mm_add_epi32(dist2, tmp2);
                                 dist3 = _mm_add_epi32(dist3, tmp3);
@@ -1025,9 +1004,9 @@ void nn_float_vec_M (int dimensions, int trcount, float *trdata, int *trklass,
                                 tmp3 = _mm_and_ps(tmp3, mask);
                                 tmp4 = _mm_and_ps(tmp4, mask);
                                 dist1 = _mm_add_ps(dist1, tmp1);
-                                dist2 = _mm_add_ps(dist2, tmp1);
-                                dist3 = _mm_add_ps(dist3, tmp1);
-                                dist4 = _mm_add_ps(dist4, tmp1);
+                                dist2 = _mm_add_ps(dist2, tmp2);
+                                dist3 = _mm_add_ps(dist3, tmp3);
+                                dist4 = _mm_add_ps(dist4, tmp4);
                         }
                         tmp1 = _mm_hadd_ps(dist1, dist1);
                         tmp2 = _mm_hadd_ps(dist2, dist2);
@@ -1143,9 +1122,9 @@ void nn_double_vec_M (int dimensions, int trcount, double *trdata, int *trklass,
                                 tmp3 = _mm_and_pd(tmp3, mask);
                                 tmp4 = _mm_and_pd(tmp4, mask);
                                 dist1 = _mm_add_pd(dist1, tmp1);
-                                dist2 = _mm_add_pd(dist1, tmp2);
-                                dist3 = _mm_add_pd(dist1, tmp3);
-                                dist4 = _mm_add_pd(dist1, tmp4);
+                                dist2 = _mm_add_pd(dist2, tmp2);
+                                dist3 = _mm_add_pd(dist3, tmp3);
+                                dist4 = _mm_add_pd(dist4, tmp4);
                         }
                         _mm_store_pd(sdist1, dist1);
                         _mm_store_pd(sdist2, dist2);

@@ -42,10 +42,10 @@ void nn_byte_sca_E (int dimensions, int trcount, char *trdata, int *trklass,
                         for (d = 0;  d < dimensions;  d++)
                         {
                                 datum = data[i + d];
-                                tmp1 = datum + trdata[ti1 + d];
-                                tmp2 = datum + trdata[ti2 + d];
-                                tmp3 = datum + trdata[ti3 + d];
-                                tmp4 = datum + trdata[ti4 + d];
+                                tmp1 = datum - trdata[ti1 + d];
+                                tmp2 = datum - trdata[ti2 + d];
+                                tmp3 = datum - trdata[ti3 + d];
+                                tmp4 = datum - trdata[ti4 + d];
                                 dist1 += tmp1 * tmp1;
                                 dist2 += tmp2 * tmp2;
                                 dist3 += tmp3 * tmp3;
@@ -126,10 +126,10 @@ void nn_short_sca_E (int dimensions, int trcount, short *trdata, int *trklass,
                         for (d = 0;  d < dimensions;  d++)
                         {
                                 datum = data[i + d];
-                                tmp1 = datum + trdata[ti1 + d];
-                                tmp2 = datum + trdata[ti2 + d];
-                                tmp3 = datum + trdata[ti3 + d];
-                                tmp4 = datum + trdata[ti4 + d];
+                                tmp1 = datum - trdata[ti1 + d];
+                                tmp2 = datum - trdata[ti2 + d];
+                                tmp3 = datum - trdata[ti3 + d];
+                                tmp4 = datum - trdata[ti4 + d];
                                 dist1 += tmp1 * tmp1;
                                 dist2 += tmp2 * tmp2;
                                 dist3 += tmp3 * tmp3;
@@ -210,10 +210,10 @@ void nn_int_sca_E (int dimensions, int trcount, int *trdata, int *trklass,
                         for (d = 0;  d < dimensions;  d++)
                         {
                                 datum = data[i + d];
-                                tmp1 = datum + trdata[ti1 + d];
-                                tmp2 = datum + trdata[ti2 + d];
-                                tmp3 = datum + trdata[ti3 + d];
-                                tmp4 = datum + trdata[ti4 + d];
+                                tmp1 = datum - trdata[ti1 + d];
+                                tmp2 = datum - trdata[ti2 + d];
+                                tmp3 = datum - trdata[ti3 + d];
+                                tmp4 = datum - trdata[ti4 + d];
                                 dist1 += tmp1 * tmp1;
                                 dist2 += tmp2 * tmp2;
                                 dist3 += tmp3 * tmp3;
@@ -278,7 +278,7 @@ void nn_float_sca_E (int dimensions, int trcount, float *trdata, int *trklass,
         float dist1, dist2, dist3, dist4;
         float tmp1, tmp2, tmp3, tmp4;
 
-        trcountU = trcount & ~0x01;
+        trcountU = trcount & ~0x03;
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
@@ -314,19 +314,19 @@ void nn_float_sca_E (int dimensions, int trcount, float *trdata, int *trklass,
                         if (dist2 < min_distance)
                         {
                                 min_distance = dist2;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 1];
                                 idx = tn + 1;
                         }
                         if (dist3 < min_distance)
                         {
                                 min_distance = dist3;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 2];
                                 idx = tn + 2;
                         }
                         if (dist4 < min_distance)
                         {
                                 min_distance = dist4;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 3];
                                 idx = tn + 3;
                         }
                 }
@@ -362,7 +362,7 @@ void nn_double_sca_E (int dimensions, int trcount, double *trdata, int *trklass,
         double dist1, dist2, dist3, dist4;
         double tmp1, tmp2, tmp3, tmp4;
 
-        trcountU = trcount &~0x03;
+        trcountU = trcount & ~0x03;
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
@@ -398,19 +398,19 @@ void nn_double_sca_E (int dimensions, int trcount, double *trdata, int *trklass,
                         if (dist2 < min_distance)
                         {
                                 min_distance = dist2;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 1];
                                 idx = tn + 1;
                         }
                         if (dist3 < min_distance)
                         {
                                 min_distance = dist3;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 2];
                                 idx = tn + 2;
                         }
                         if (dist4 < min_distance)
                         {
                                 min_distance = dist4;
-                                cl = trklass[tn];
+                                cl = trklass[tn + 3];
                                 idx = tn + 3;
                         }
                 }
@@ -484,9 +484,9 @@ void nn_byte_sca_M (int dimensions, int trcount, char *trdata, int *trklass,
                                 mask3 = tmp3 >> (sizeof(char) * CHAR_BIT - 1);
                                 mask4 = tmp4 >> (sizeof(char) * CHAR_BIT - 1);
                                 dist1 += (tmp1 ^ mask1) - mask1;
-                                dist2 += (tmp2 ^ mask2) - mask1;
-                                dist3 += (tmp3 ^ mask3) - mask1;
-                                dist4 += (tmp4 ^ mask4) - mask1;
+                                dist2 += (tmp2 ^ mask2) - mask2;
+                                dist3 += (tmp3 ^ mask3) - mask3;
+                                dist4 += (tmp4 ^ mask4) - mask4;
                         }
                         if (dist1 < min_distance)
                         {
@@ -522,7 +522,6 @@ void nn_byte_sca_M (int dimensions, int trcount, char *trdata, int *trklass,
                                 tmp1 = data[i + d] - trdata[ti1 + d];
                                 mask1 = tmp1 >> (sizeof(char) * CHAR_BIT - 1);
                                 dist1 += (tmp1 ^ mask1) - mask1;
-                                dist1 += tmp1 * tmp1;
                         }
                         if (dist1 < min_distance)
                         {
@@ -575,9 +574,9 @@ void nn_short_sca_M (int dimensions, int trcount, short *trdata, int *trklass,
                                 mask3 = tmp3 >> (sizeof(short) * CHAR_BIT - 1);
                                 mask4 = tmp4 >> (sizeof(short) * CHAR_BIT - 1);
                                 dist1 += (tmp1 ^ mask1) - mask1;
-                                dist2 += (tmp2 ^ mask2) - mask1;
-                                dist3 += (tmp3 ^ mask3) - mask1;
-                                dist4 += (tmp4 ^ mask4) - mask1;
+                                dist2 += (tmp2 ^ mask2) - mask2;
+                                dist3 += (tmp3 ^ mask3) - mask3;
+                                dist4 += (tmp4 ^ mask4) - mask4;
                         }
                         if (dist1 < min_distance)
                         {
@@ -665,9 +664,9 @@ void nn_int_sca_M (int dimensions, int trcount, int *trdata, int *trklass,
                                 mask3 = tmp3 >> (sizeof(int) * CHAR_BIT - 1);
                                 mask4 = tmp4 >> (sizeof(int) * CHAR_BIT - 1);
                                 dist1 += (tmp1 ^ mask1) - mask1;
-                                dist2 += (tmp2 ^ mask2) - mask1;
-                                dist3 += (tmp3 ^ mask3) - mask1;
-                                dist4 += (tmp4 ^ mask4) - mask1;
+                                dist2 += (tmp2 ^ mask2) - mask2;
+                                dist3 += (tmp3 ^ mask3) - mask3;
+                                dist4 += (tmp4 ^ mask4) - mask4;
                         }
                         if (dist1 < min_distance)
                         {
