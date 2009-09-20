@@ -31,8 +31,7 @@ check()
         for type in $types
         do
                 echo -n "Verifying $label1, $3, $type	... "
-                ./bench --runs 1 $sca $manh --type $type ../test/basic 2>&1 | \
-                awk -f filter.awk >result_check
+                ./bench --runs 1 $sca $manh --type $type ../test/basic 2>&1 | awk -f filter.awk >result_check
 
                 if cmp -s ../test/debug-$2.$1 result_check
                 then
