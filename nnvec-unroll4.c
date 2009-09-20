@@ -284,7 +284,7 @@ void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
                 min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
-                for (tn = 0;  tn < trcountU;  tn += 2)
+                for (tn = 0;  tn < trcountU;  tn += 4)
                 {
                         ti1 = tn * dimensions;
                         ti2 = (tn + 1) * dimensions;
