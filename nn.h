@@ -14,7 +14,7 @@ enum valuetype
 /* Forward declaration to avoid cyclic dependencies */
 struct db;
 
-
+int adjusted_block_count (int);
 void nn (enum valuetype, int, struct db *, struct db *);
 
 #endif /* __nnvect_nn */

@@ -170,6 +170,8 @@ int main (int argc, char **argv)
                (typelabel == NULL ? "float" : typelabel));
         train_db = load_db(trfilename, type, block_limit, !want_scalar, 0);
         free(trfilename);
+        if (train_db->block_items > 0)
+                train_db->block_items = adjusted_block_count(train_db->block_items);
         print_db_info(train_db);
 
         printf("\nLoading %s as %ss\n\n", argv[0],

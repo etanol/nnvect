@@ -4,6 +4,13 @@
 #include <float.h>
 #include <math.h>
 
+/* Block adjustment */
+int adjusted_block_count (int bc)
+{
+        return bc & ~0x03;
+}
+
+
 
 /******************************************************************************/
 /*                                                                            */
