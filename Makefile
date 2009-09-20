@@ -1,14 +1,33 @@
 MAKEFLAGS += -R -r
+CFLAGS    ?= -O3 -fomit-frame-pointer -msse2
 
-BASE_CFLAGS := -pipe -MMD -Wall
-CFLAGS := -O0 -g -march=pentium-m
+PROGRAMS := bench
 
-bench: bench.o nn.o db.o util.o
-	$(CC) -g -o $@ $^
+bench_SOURCES := bench.c db.c nn.c util.c
+
+
+all: $(PROGRAMS)
+
+define gen_rules
+depfiles := $(patsubst %.c,.%.d,$($(1)_SOURCES))
+objects  += $(patsubst %.c,%.o,$($(1)_SOURCES))
+
+$(1): $(patsubst %.c,%.o,$($(1)_SOURCES))
+	@echo " Linking    $$@" && $(CC) $(LDFLAGS) -o $$@ $$^
+endef
+
+$(foreach p,$(PROGRAMS),$(eval $(call gen_rules,$(p))))
+
 
 .SUFFIXES: .c .o
 %.o: %.c
-	$(CC) $(BASE_CFLAGS) $(CFLAGS) -c -o $@ $<
+	@echo " Compiling  $@" && $(CC) -pipe -Wall -MMD -MF .$(<F:.c=.d) $(CFLAGS) -c -o $@ $<
 
--include $(wildcard *.d)
+
+.PHONY: clean
+clean:
+	@-echo " Cleaning" ; rm -f $(PROGRAMS) $(depfiles) $(objects)
+
+
+-include $(depfiles)
 
