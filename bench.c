@@ -7,7 +7,7 @@ extern void nn (int, int, float *, int *, int, float *, int **);
 
 int main (int argc, char **argv)
 {
-        float start, finish;
+        struct timeval start, finish;
         float *features, *train_features;
         int *classes, *train_classes, *computed_classes;
         int dimensions, train_dimensions;
@@ -33,18 +33,20 @@ int main (int argc, char **argv)
                 fatal("Not enough memory for computed classes");
 
         printf("NN\n");
-        start = system_time();
+        gettimeofday(&start, NULL);
         nn(dimensions, train_count, train_features, train_classes, count,
            features, &computed_classes);
-        finish = system_time();
-        printf("NN took %fms\n", finish - start);
+        gettimeofday(&finish, NULL);
+        printf("NN took %fs\n", elapsed_time(&start, &finish));
 
+        /*
         printf("Verifying\n");
         for (i = 0;  i < count;  i++)
                 if (classes[i] != computed_classes[i])
-                        printf("i = %d,  classes[i] = %d,  computed_classes[i] = %d",
-                               i, classes[i], computed_classes[i]);
+                        printf("classes[%d] = %d,  computed_classes[%d] = %d\n",
+                               i, classes[i], i, computed_classes[i]);
 
+        */
         return EXIT_SUCCESS;
 }
 

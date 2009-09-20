@@ -63,15 +63,6 @@ void fatal (const char *msg, ...)
 }
 
 
-float system_time (void)
-{
-        struct timeval t;
-
-        gettimeofday(&t, NULL);
-        return t.tv_sec * 1.0e6f + t.tv_usec;
-}
-
-
 void *do_malloc (size_t bytes, const char *file, int line)
 {
         void *addr;
