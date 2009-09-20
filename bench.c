@@ -3,7 +3,8 @@
 #include "util.h"
 
 extern void load_db (char *, float **, int **, int *, int *);
-extern void nn (int, int, float *, int *, int, float *, int **);
+extern void nn_float (int, int, float *, int *, int, float *, int *);
+extern void nn_floats (int, int, float *, int *, int, float *, int *);
 
 int main (int argc, char **argv)
 {
@@ -32,10 +33,17 @@ int main (int argc, char **argv)
         if (computed_classes == NULL)
                 fatal("Not enough memory for computed classes");
 
-        printf("NN\n");
+        printf("NN serial\n");
         gettimeofday(&start, NULL);
-        nn(dimensions, train_count, train_features, train_classes, count,
-           features, &computed_classes);
+        nn_float(dimensions, train_count, train_features, train_classes, count,
+                 features, computed_classes);
+        gettimeofday(&finish, NULL);
+        printf("NN took %fs\n", elapsed_time(&start, &finish));
+
+        printf("NN vector\n");
+        gettimeofday(&start, NULL);
+        nn_floats(dimensions, train_count, train_features, train_classes, count,
+                  features, computed_classes);
         gettimeofday(&finish, NULL);
         printf("NN took %fs\n", elapsed_time(&start, &finish));
 
