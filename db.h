@@ -5,7 +5,7 @@
 
 struct db
 {
-        enum datatype type;
+        enum valuetype type;
         int count;
         int dimensions;
         int real_dimensions;
@@ -14,7 +14,7 @@ struct db
         void *data;
 };
 
-struct db *load_db (const char *, enum datatype, int);
+struct db *load_db (const char *, enum valuetype, int);
 void       free_db (struct db *);
 
 #endif /* __nnvect_db */

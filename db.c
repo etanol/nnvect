@@ -106,7 +106,7 @@ static void read_data (struct file *file, struct db *db)
                         case SHORT:
                                 ((short *) db->data)[i] = (short) strtol(c, &next, 10);
                                 break;
-                        case INTEGER:
+                        case INT:
                                 ((int *) db->data)[i] = (int) strtol(c, &next, 10);
                                 break;
                         case FLOAT:
@@ -126,7 +126,7 @@ static void read_data (struct file *file, struct db *db)
 }
 
 
-struct db *load_db (const char *filename, enum datatype type, int want_padding)
+struct db *load_db (const char *filename, enum valuetype type, int want_padding)
 {
         char *infoname;
         int check_float, typesize, rowsize;
@@ -147,7 +147,7 @@ struct db *load_db (const char *filename, enum datatype type, int want_padding)
         {
         case BYTE:    typesize = sizeof(char);    check_float = 1;  break;
         case SHORT:   typesize = sizeof(short);   check_float = 1;  break;
-        case INTEGER: typesize = sizeof(int);     check_float = 1;  break;
+        case INT:     typesize = sizeof(int);     check_float = 1;  break;
         case FLOAT:   typesize = sizeof(float);   check_float = 0;  break;
         case DOUBLE:  typesize = sizeof(double);  check_float = 0;  break;
         }

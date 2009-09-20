@@ -3,6 +3,7 @@
 #include "nn.h"
 #include "stats.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,15 +11,16 @@
 
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "d:hr:st:";
+static char OptString[] = "hmo:r:st:";
 
 static struct option LongOpts[] = {
-        { "dump",   required_argument, NULL, 'd' },
-        { "help",   no_argument,       NULL, 'h' },
-        { "runs",   required_argument, NULL, 'r' },
-        { "scalar", no_argument,       NULL, 's' },
-        { "type",   required_argument, NULL, 't' },
-        { NULL,     0,                 NULL, 0   }
+        { "help",      no_argument,       NULL, 'h' },
+        { "manhattan", no_argument,       NULL, 'm' },
+        { "output",    required_argument, NULL, 'o' },
+        { "runs",      required_argument, NULL, 'r' },
+        { "scalar",    no_argument,       NULL, 's' },
+        { "type",      required_argument, NULL, 't' },
+        { NULL,        0,                 NULL, 0   }
 };
 
 
@@ -27,30 +29,39 @@ static void usage (const char *progname)
         fprintf(stderr,
 "Usage: %s [options] dbfile\n\n"
 "Where possible options are:\n\n"
-"    -d, --dump=FILE  Save the calculated results to FILE in order to compare\n"
-"                     them against valid solutions.\n\n"
-"    -h, --help       This help.\n\n"
-"    -r, --runs=N     Execute N runs for statistical purposes.  In the absence\n"
-"                     of this option, three runs are performed.  This parameter\n"
-"                     is ignored when combined with \"-d\" or \"--dump\".\n\n"
-"    -s, --scalar     Run a non-vectorized version of the algorithm.  Vectorized\n"
-"                     versions are used by default.\n\n"
-"    -t, --type=TYPE  Load data as the given TYPE.  Possible types are:\n"
-"                         %d  BYTE    (%d bytes)\n"
-"                         %d  SHORT   (%d bytes)\n"
-"                         %d  INTEGER (%d bytes)\n"
-"                         %d  FLOAT   (%d bytes)\n"
-"                         %d  DOUBLE  (%d bytes)\n"
-"                     Only numeric values are accepted.  By default, FLOAT is\n"
-"                     used.\n\n"
+"    -h, --help         This help.\n\n"
+"    -m, --manhattan    Use Manhattan distance instead of euclidean distance\n"
+"                       for nearest neighbour search.\n\n"
+"    -o, --output=FILE  Save the calculated results to FILE in order to compare\n"
+"                       them against valid solutions.\n\n"
+"    -r, --runs=N       Execute N runs for statistical purposes.  In the absence\n"
+"                       of this option, three runs are performed.  This parameter\n"
+"                       is ignored when combined with \"-d\" or \"--dump\".\n\n"
+"    -s, --scalar       Run a non-vectorized version of the algorithm instead\n"
+"                       of the vectorized one.\n\n"
+"    -t, --type=TYPE    Load data as the given TYPE.  Possible types are:\n"
+"                           byte    (%d bytes)\n"
+"                           short   (%d bytes)\n"
+"                           int     (%d bytes)\n"
+"                           float   (%d bytes)\n"
+"                           double  (%d bytes)\n\n"
 "NOTE: Just a single file needs to be specified as input.  However, the files\n"
 "      \"dbfile.info\", \"dbfile.t\" and \"dbfile.t.info\" are assumed to reside\n"
 "      under the same path as \"dbfile\".\n\n", progname,
-               BYTE, (int) sizeof(char), SHORT, (int) sizeof(short),
-               INTEGER, (int) sizeof(int), FLOAT, (int) sizeof(float),
-               DOUBLE, (int) sizeof(double));
+                (int) sizeof(char), (int) sizeof(short), (int) sizeof(int),
+                (int) sizeof(float), (int) sizeof(double));
 
         exit(EXIT_FAILURE);
+}
+
+
+static void strtolower (char *s)
+{
+        while (*s != '\0')
+        {
+                *s = tolower(*s);
+                s++;
+        }
 }
 
 
@@ -58,7 +69,8 @@ int main (int argc, char **argv)
 {
         char *progname, *trfilename, *dumpfile, *typelabel;
         int cmdopt, has_opts, want_sequential, r, runs;
-        enum datatype type;
+        enum valuetype type;
+        enum distancekind kind;
         struct db *db, *train_db;
         struct timestats *ts;
         struct stats sts;
@@ -67,7 +79,8 @@ int main (int argc, char **argv)
         dumpfile = NULL;
         runs = 3;
         type = FLOAT;
-        typelabel = "FLOAT";
+        kind = EUCLIDEAN;
+        typelabel = NULL;
         want_sequential = 0;
         has_opts = 1;
 
@@ -79,14 +92,17 @@ int main (int argc, char **argv)
                 case -1:
                         has_opts = 0;
                         break;
-                case 'd':
+                case 'h':
+                        usage(progname);
+                        break;
+                case 'm':
+                        kind = MANHATTAN;
+                        break;
+                case 'o':
                         if (dumpfile != NULL)
                                 free(dumpfile);
                         dumpfile = xstrcat(optarg, NULL);
                         runs = 1;
-                        break;
-                case 'h':
-                        usage(progname);
                         break;
                 case 'r':
                         if (dumpfile == NULL)
@@ -104,15 +120,23 @@ int main (int argc, char **argv)
                         want_sequential = 1;
                         break;
                 case 't':
-                        switch (atoi(optarg))
-                        {
-                        case BYTE:    type = BYTE;    typelabel = "BYTE";    break;
-                        case SHORT:   type = SHORT;   typelabel = "SHORT";   break;
-                        case INTEGER: type = INTEGER; typelabel = "INTEGER"; break;
-                        case FLOAT:   type = FLOAT;   typelabel = "FLOAT";   break;
-                        case DOUBLE:  type = DOUBLE;  typelabel = "DOUBLE";  break;
-                        default: quit("Invalid type: %s", optarg);
-                        }
+                        strtolower(optarg);
+                        if (strcmp(optarg, "byte") == 0)
+                                type = BYTE;
+                        else if (strcmp(optarg, "short") == 0)
+                                type = SHORT;
+                        else if (strcmp(optarg, "int") == 0)
+                                type = INT;
+                        else if (strcmp(optarg, "float") == 0)
+                                type = FLOAT;
+                        else if (strcmp(optarg, "double") == 0)
+                                type = DOUBLE;
+                        else
+                                quit("Invalid type: %s", optarg);
+
+                        if (typelabel != NULL)
+                                free(typelabel);
+                        typelabel = xstrcat(optarg, NULL);
                         break;
                 case '?':
                         fputs("\n", stderr);
@@ -132,12 +156,16 @@ int main (int argc, char **argv)
                 usage(progname);
         }
 
+        printf("Using %s NN, calculating %s distance with %s values.\n\n",
+               (want_sequential ? "sequential" : "vectorized"),
+               (kind == EUCLIDEAN ? "euclidean" : "manhattan"), typelabel);
+
         trfilename = xstrcat(argv[0], ".t");
-        printf("Loading %s as %s\n", trfilename, typelabel);
+        printf("Loading %s\n", trfilename);
         train_db = load_db(trfilename, type, !want_sequential);
         free(trfilename);
 
-        printf("Loading %s as %s\n\n", argv[0], typelabel);
+        printf("Loading %s\n\n", argv[0]);
         db = load_db(argv[0], type, !want_sequential);
 
         if (db->dimensions != train_db->dimensions)
@@ -148,22 +176,9 @@ int main (int argc, char **argv)
         for (r = 0;  r < runs;  r++)
         {
                 printf("Run %d of %d\n", r + 1, runs);
-                if (want_sequential)
-                {
-                        stats_start(ts);
-                        nn_seq(type, db->dimensions, train_db->count,
-                               train_db->data, train_db->klass, db->count,
-                               db->data, db->klass);
-                        stats_stop(ts);
-                }
-                else
-                {
-                        stats_start(ts);
-                        nn_vect(type, db->dimensions, train_db->count,
-                                train_db->data, train_db->klass, db->count,
-                                db->data, db->klass);
-                        stats_stop(ts);
-                }
+                stats_start(ts);
+                nn(type, kind, want_sequential, train_db, db);
+                stats_stop(ts);
         }
         stats_calculate(ts, &sts);
         printf("\nStatistics\n\n");

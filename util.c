@@ -33,7 +33,7 @@ void print_message (const char *file, int line, int severity,
                 label = "???";
         }
 
-        fprintf(stderr, "%s at %s:%d  -  ", label, file, line);
+        fprintf(stderr, "[%s at %s:%d] ", label, file, line);
         va_start(args, message);
         vfprintf(stderr, message, args);
         va_end(args);
