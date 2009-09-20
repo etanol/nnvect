@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "misc.h"
+#include "util.h"
 
 
 static inline char *next_line (char *data, int *position, size_t limit)
