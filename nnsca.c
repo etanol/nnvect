@@ -47,6 +47,7 @@ void nn_byte_sca_E (int dimensions, int trcount, char *trdata, int *trklass,
                         }
                 }
                 debug("%d\t%u\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
         }
 }
 
@@ -84,6 +85,7 @@ void nn_short_sca_E (int dimensions, int trcount, short *trdata, int *trklass,
                         }
                 }
                 debug("%d\t%u\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
         }
 }
 
@@ -121,6 +123,7 @@ void nn_int_sca_E (int dimensions, int trcount, int *trdata, int *trklass,
                         }
                 }
                 debug("%d\t%u\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
         }
 }
 
