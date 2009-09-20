@@ -22,7 +22,7 @@ void nn_byte_seq_E (int dimensions, int trcount, char *trdata, int *trklass,
         int min_distance, dist;
         char tmp;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -59,7 +59,7 @@ void nn_short_seq_E (int dimensions, int trcount, short *trdata, int *trklass,
         int min_distance, dist;
         short tmp;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -95,7 +95,7 @@ void nn_int_seq_E (int dimensions, int trcount, int *trdata, int *trklass,
         int cl, d, idx;
         int min_distance, dist, tmp;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -134,7 +134,7 @@ void nn_float_seq_E (int dimensions, int trcount, float *trdata, int *trklass,
         float min_distance, dist;
         float tmp;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -172,7 +172,7 @@ void nn_double_seq_E (int dimensions, int trcount, double *trdata, int *trklass,
         double min_distance, dist;
         double tmp;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -220,7 +220,7 @@ void nn_byte_seq_M (int dimensions, int trcount, char *trdata, int *trklass,
         char min_distance, dist;
         char tmp, mask;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -259,7 +259,7 @@ void nn_short_seq_M (int dimensions, int trcount, short *trdata, int *trklass,
         short min_distance, dist;
         short tmp, mask;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -298,7 +298,7 @@ void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
         int min_distance, dist;
         int tmp, mask;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;

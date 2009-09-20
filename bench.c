@@ -158,7 +158,8 @@ int main (int argc, char **argv)
 
         printf("Using %s NN, calculating %s distance with %s values.\n\n",
                (want_sequential ? "sequential" : "vectorized"),
-               (kind == EUCLIDEAN ? "euclidean" : "manhattan"), typelabel);
+               (kind == EUCLIDEAN ? "euclidean" : "manhattan"),
+               (typelabel == NULL ? "float" : typelabel));
 
         trfilename = xstrcat(argv[0], ".t");
         printf("Loading %s\n", trfilename);

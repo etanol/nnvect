@@ -78,7 +78,7 @@ void nn (enum valuetype type, enum distancekind kind, int sequential,
         }
 
         if (func == NULL)
-                quit("Invalid combination of implementation, value type and distance kind.");
+                quit("Invalid combination of implementation, value type and distance kind");
 
         func(db->dimensions, trdb->count, trdb->data, trdb->klass, db->count,
              db->data, db->klass);

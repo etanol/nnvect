@@ -29,7 +29,7 @@ void nn_float_vect_E (int dimensions, int trcount, float *trdata, int *trklass,
         __m128 tmp1, tmp2;
         __m128 dist;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -82,7 +82,7 @@ void nn_double_vect_E (int dimensions, int trcount, double *trdata, int *trklass
         __m128d tmp1, tmp2;
         __m128d dist;
 
-        debug("Class\tEuclid\tIndex ");
+        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
