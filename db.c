@@ -110,7 +110,8 @@ void load_db (char *filename, float **features, int **classes,
         /* Pad dimensions to ALIGN_BOUNDARY */
         rowsize = (dims * sizeof(float) + LOWER_MASK) & UPPER_MASK;
         dims = rowsize / sizeof(float);
-        *dimensions = dims / sizeof(float);
+        *dimensions = dims;
+        *item_count = count;
         *features = malloc_aligned(count * rowsize);
         *classes = calloc(count, sizeof(int));
         if (*classes == NULL)

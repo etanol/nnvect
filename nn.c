@@ -18,7 +18,7 @@ void nn (int dimensions, int trcount, float *trfeatures, int *trclasses,
                 min_distance = (float) (1 << 31);
                 class = -1;
 
-                for (tn = 0;  n < trcount;  tn++)
+                for (tn = 0;  tn < trcount;  tn++)
                 {
                         ti = tn * dimensions;
                         dist = _mm_setzero_ps();
