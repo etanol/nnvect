@@ -4,7 +4,7 @@ LDFLAGS   += -lm
 
 PROGRAMS := bench
 
-bench_SOURCES := bench.c db.c nn.c nnseq.c nnvect.c util.c stats.c
+bench_SOURCES := bench.c db.c nn.c nnsca.c nnvec.c util.c stats.c
 
 
 all: $(PROGRAMS)

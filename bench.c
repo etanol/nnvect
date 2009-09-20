@@ -68,7 +68,7 @@ static void strtolower (char *s)
 int main (int argc, char **argv)
 {
         char *progname, *trfilename, *dumpfile, *typelabel;
-        int cmdopt, has_opts, want_sequential, r, runs;
+        int cmdopt, has_opts, want_scalar, r, runs;
         enum valuetype type;
         enum distancekind kind;
         struct db *db, *train_db;
@@ -81,7 +81,7 @@ int main (int argc, char **argv)
         type = FLOAT;
         kind = EUCLIDEAN;
         typelabel = NULL;
-        want_sequential = 0;
+        want_scalar = 0;
         has_opts = 1;
 
         while (has_opts)
@@ -117,7 +117,7 @@ int main (int argc, char **argv)
                         }
                         break;
                 case 's':
-                        want_sequential = 1;
+                        want_scalar = 1;
                         break;
                 case 't':
                         strtolower(optarg);
@@ -157,17 +157,17 @@ int main (int argc, char **argv)
         }
 
         printf("Using %s NN, calculating %s distance with %s values.\n\n",
-               (want_sequential ? "sequential" : "vectorized"),
+               (want_scalar ? "scalar" : "vectorized"),
                (kind == EUCLIDEAN ? "euclidean" : "manhattan"),
                (typelabel == NULL ? "float" : typelabel));
 
         trfilename = xstrcat(argv[0], ".t");
         printf("Loading %s\n", trfilename);
-        train_db = load_db(trfilename, type, !want_sequential);
+        train_db = load_db(trfilename, type, !want_scalar);
         free(trfilename);
 
         printf("Loading %s\n\n", argv[0]);
-        db = load_db(argv[0], type, !want_sequential);
+        db = load_db(argv[0], type, !want_scalar);
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
@@ -178,7 +178,7 @@ int main (int argc, char **argv)
         {
                 printf("Run %d of %d\n", r + 1, runs);
                 stats_start(ts);
-                nn(type, kind, want_sequential, train_db, db);
+                nn(type, kind, want_scalar, train_db, db);
                 stats_stop(ts);
         }
         stats_calculate(ts, &sts);

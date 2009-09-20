@@ -15,8 +15,8 @@
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_int_vect_E (int dimensions, int trcount, int *trdata, int *trklass,
-                    int count, int *data, int *klass)
+void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
+                   int count, int *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -68,8 +68,8 @@ void nn_int_vect_E (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_vect_E (int dimensions, int trcount, float *trdata, int *trklass,
-                      int count, float *data, int *klass)
+void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
+                     int count, float *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -119,8 +119,8 @@ void nn_float_vect_E (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_vect_E (int dimensions, int trcount, double *trdata, int *trklass,
-                       int count, double *data, int *klass)
+void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
+                      int count, double *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -175,8 +175,8 @@ void nn_double_vect_E (int dimensions, int trcount, double *trdata, int *trklass
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_byte_vect_M (int dimensions, int trcount, char *trdata, int *trklass,
-                     int count, char *data, int *klass)
+void nn_byte_vec_M (int dimensions, int trcount, char *trdata, int *trklass,
+                    int count, char *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -219,8 +219,8 @@ void nn_byte_vect_M (int dimensions, int trcount, char *trdata, int *trklass,
 }
 
 
-void nn_short_vect_M (int dimensions, int trcount, short *trdata, int *trklass,
-                      int count, short *data, int *klass)
+void nn_short_vec_M (int dimensions, int trcount, short *trdata, int *trklass,
+                     int count, short *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -267,8 +267,8 @@ void nn_short_vect_M (int dimensions, int trcount, short *trdata, int *trklass,
 }
 
 
-void nn_int_vect_M (int dimensions, int trcount, int *trdata, int *trklass,
-                    int count, int *data, int *klass)
+void nn_int_vec_M (int dimensions, int trcount, int *trdata, int *trklass,
+                   int count, int *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -315,8 +315,8 @@ void nn_int_vect_M (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_vect_M (int dimensions, int trcount, float *trdata, int *trklass,
-                      int count, float *data, int *klass)
+void nn_float_vec_M (int dimensions, int trcount, float *trdata, int *trklass,
+                     int count, float *data, int *klass)
 {
         int n, tn;
         int i, ti;
@@ -360,8 +360,8 @@ void nn_float_vect_M (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_vect_M (int dimensions, int trcount, double *trdata, int *trklass,
-                       int count, double *data, int *klass)
+void nn_double_vec_M (int dimensions, int trcount, double *trdata, int *trklass,
+                      int count, double *data, int *klass)
 {
         int n, tn;
         int i, ti;

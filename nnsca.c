@@ -14,7 +14,7 @@
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_byte_seq_E (int dimensions, int trcount, char *trdata, int *trklass,
+void nn_byte_sca_E (int dimensions, int trcount, char *trdata, int *trklass,
                     int count, char *data, int *klass)
 {
         int n, tn;
@@ -51,7 +51,7 @@ void nn_byte_seq_E (int dimensions, int trcount, char *trdata, int *trklass,
 }
 
 
-void nn_short_seq_E (int dimensions, int trcount, short *trdata, int *trklass,
+void nn_short_sca_E (int dimensions, int trcount, short *trdata, int *trklass,
                      int count, short *data, int *klass)
 {
         int n, tn;
@@ -88,7 +88,7 @@ void nn_short_seq_E (int dimensions, int trcount, short *trdata, int *trklass,
 }
 
 
-void nn_int_seq_E (int dimensions, int trcount, int *trdata, int *trklass,
+void nn_int_sca_E (int dimensions, int trcount, int *trdata, int *trklass,
                    int count, int *data, int *klass)
 {
         int n, tn;
@@ -127,7 +127,7 @@ void nn_int_seq_E (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_seq_E (int dimensions, int trcount, float *trdata, int *trklass,
+void nn_float_sca_E (int dimensions, int trcount, float *trdata, int *trklass,
                      int count, float *data, int *klass)
 {
         int n, tn;
@@ -165,7 +165,7 @@ void nn_float_seq_E (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_seq_E (int dimensions, int trcount, double *trdata, int *trklass,
+void nn_double_sca_E (int dimensions, int trcount, double *trdata, int *trklass,
                       int count, double *data, int *klass)
 {
         int n, tn;
@@ -213,7 +213,7 @@ void nn_double_seq_E (int dimensions, int trcount, double *trdata, int *trklass,
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_byte_seq_M (int dimensions, int trcount, char *trdata, int *trklass,
+void nn_byte_sca_M (int dimensions, int trcount, char *trdata, int *trklass,
                    int count, char *data, int *klass)
 {
         int n, tn;
@@ -252,7 +252,7 @@ void nn_byte_seq_M (int dimensions, int trcount, char *trdata, int *trklass,
 }
 
 
-void nn_short_seq_M (int dimensions, int trcount, short *trdata, int *trklass,
+void nn_short_sca_M (int dimensions, int trcount, short *trdata, int *trklass,
                      int count, short *data, int *klass)
 {
         int n, tn;
@@ -291,7 +291,7 @@ void nn_short_seq_M (int dimensions, int trcount, short *trdata, int *trklass,
 }
 
 
-void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
+void nn_int_sca_M (int dimensions, int trcount, int *trdata, int *trklass,
                    int count, int *data, int *klass)
 {
         int n, tn;
@@ -332,7 +332,7 @@ void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_seq_M (int dimensions, int trcount, float *trdata, int *trklass,
+void nn_float_sca_M (int dimensions, int trcount, float *trdata, int *trklass,
                      int count, float *data, int *klass)
 {
         int n, tn;
@@ -366,7 +366,7 @@ void nn_float_seq_M (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_seq_M (int dimensions, int trcount, double *trdata, int *trklass,
+void nn_double_sca_M (int dimensions, int trcount, double *trdata, int *trklass,
                       int count, double *data, int *klass)
 {
         int n, tn;

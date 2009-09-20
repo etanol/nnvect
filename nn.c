@@ -8,30 +8,31 @@
 
 
 /* Sequential versions defined at nnseq.c */
-DECLARE(nn_byte_seq_E);
-DECLARE(nn_byte_seq_M);
-DECLARE(nn_short_seq_E);
-DECLARE(nn_short_seq_M);
-DECLARE(nn_int_seq_E);
-DECLARE(nn_int_seq_M);
-DECLARE(nn_float_seq_E);
-DECLARE(nn_float_seq_M);
-DECLARE(nn_double_seq_E);
-DECLARE(nn_double_seq_M);
+DECLARE(nn_byte_sca_E);
+DECLARE(nn_byte_sca_M);
+DECLARE(nn_short_sca_E);
+DECLARE(nn_short_sca_M);
+DECLARE(nn_int_sca_E);
+DECLARE(nn_int_sca_M);
+DECLARE(nn_float_sca_E);
+DECLARE(nn_float_sca_M);
+DECLARE(nn_double_sca_E);
+DECLARE(nn_double_sca_M);
 
 /* Vectorized versions defined at nnvect.c */
-DECLARE(nn_byte_vect_M);
-//DECLARE(nn_short_vect_E);
-DECLARE(nn_short_vect_M);
-DECLARE(nn_int_vect_E);
-DECLARE(nn_int_vect_M);
-DECLARE(nn_float_vect_E);
-DECLARE(nn_float_vect_M);
-DECLARE(nn_double_vect_E);
-DECLARE(nn_double_vect_M);
+//DECLARE(nn_byte_vec_E);
+DECLARE(nn_byte_vec_M);
+//DECLARE(nn_short_vec_E);
+DECLARE(nn_short_vec_M);
+DECLARE(nn_int_vec_E);
+DECLARE(nn_int_vec_M);
+DECLARE(nn_float_vec_E);
+DECLARE(nn_float_vec_M);
+DECLARE(nn_double_vec_E);
+DECLARE(nn_double_vec_M);
 
 
-void nn (enum valuetype type, enum distancekind kind, int sequential,
+void nn (enum valuetype type, enum distancekind kind, int scalar,
          struct db *trdb, struct db *db)
 {
         void (*func) (int, int, void *, int *, int, void *, int *);
@@ -43,19 +44,19 @@ void nn (enum valuetype type, enum distancekind kind, int sequential,
                 switch (type)
                 {
                 case BYTE:
-                        func = (sequential ? nn_byte_seq_E : NULL);
+                        func = (scalar ? nn_byte_sca_E : NULL);
                         break;
                 case SHORT:
-                        func = (sequential ? nn_short_seq_E : NULL);
+                        func = (scalar ? nn_short_sca_E : NULL);
                         break;
                 case INT:
-                        func = (sequential ? nn_int_seq_E : nn_int_vect_E);
+                        func = (scalar ? nn_int_sca_E : nn_int_vec_E);
                         break;
                 case FLOAT:
-                        func = (sequential ? nn_float_seq_E : nn_float_vect_E);
+                        func = (scalar ? nn_float_sca_E : nn_float_vec_E);
                         break;
                 case DOUBLE:
-                        func = (sequential ? nn_double_seq_E : nn_double_vect_E);
+                        func = (scalar ? nn_double_sca_E : nn_double_vec_E);
                         break;
                 }
                 break;
@@ -63,19 +64,19 @@ void nn (enum valuetype type, enum distancekind kind, int sequential,
                 switch (type)
                 {
                 case BYTE:
-                        func = (sequential ? nn_byte_seq_M : nn_byte_vect_M);
+                        func = (scalar ? nn_byte_sca_M : nn_byte_vec_M);
                         break;
                 case SHORT:
-                        func = (sequential ? nn_short_seq_M : nn_short_vect_M);
+                        func = (scalar ? nn_short_sca_M : nn_short_vec_M);
                         break;
                 case INT:
-                        func = (sequential ? nn_int_seq_M : nn_int_vect_M);
+                        func = (scalar ? nn_int_sca_M : nn_int_vec_M);
                         break;
                 case FLOAT:
-                        func = (sequential ? nn_float_seq_M : nn_float_vect_M);
+                        func = (scalar ? nn_float_sca_M : nn_float_vec_M);
                         break;
                 case DOUBLE:
-                        func = (sequential ? nn_double_seq_M : nn_double_vect_M);
+                        func = (scalar ? nn_double_sca_M : nn_double_vec_M);
                         break;
                 }
                 break;
