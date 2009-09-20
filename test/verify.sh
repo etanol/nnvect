@@ -29,7 +29,7 @@ check()
                 m=
         fi
         ../debug/$1 --runs=1 $m --type=$4 ${5+--scalar} $2 2>&1 | awk -f ../debug/filter.awk >$dumpfile
-        echo "FAILED (dump at $dumpfile)"
+        echo "FAILED --> $dumpfile"
     fi
 }
 
@@ -43,33 +43,34 @@ check()
 run_test()
 {
 
-    echo "Testing '$1' with '$2' data"
+    echo "Testing '$1' with '$2'"
     echo
-    printf "  Euclidean distance test "
+    printf "  Euclidean distance "
     for t in "byte  "  "short "  "int   "  "float "  "double"
     do
         printf "$t "
         printf "scalar  "
         ../$1 --output=$RFILE --type=$t --scalar $2 >/dev/null
         check $1 $2 euclid $t scalar
-        printf "                                 vector  "
+        printf "                            vector  "
         ../$1 --output=$RFILE --type=$t $2 >/dev/null
         check $1 $2 euclid $t
-        printf "                          "
+        printf "                     "
     done
     echo
-    printf "  Manhattan distance test "
+    printf "  Manhattan distance "
     for t in "byte  "  "short "  "int   "  "float "  "double"
     do
         printf "$t "
         printf "scalar  "
         ../$1 --manhattan --output=$RFILE --type=$t --scalar $2 >/dev/null
         check $1 $2 manhattan $t scalar
-        printf "                                 vector  "
+        printf "                            vector  "
         ../$1 --manhattan --output=$RFILE --type=$t $2 >/dev/null
         check $1 $2 manhattan $t
-        printf "                          "
+        printf "                     "
     done
+    echo
     echo
 }
 
