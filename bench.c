@@ -156,18 +156,19 @@ int main (int argc, char **argv)
                 usage(progname);
         }
 
-        printf("Using %s NN, calculating %s distance with %s values.\n\n",
+        printf("Using %s NN, calculating %s distance.\n\n",
                (want_scalar ? "scalar" : "vectorized"),
-               (kind == EUCLIDEAN ? "euclidean" : "manhattan"),
-               (typelabel == NULL ? "float" : typelabel));
+               (kind == EUCLIDEAN ? "euclidean" : "manhattan"));
 
         trfilename = xstrcat(argv[0], ".t");
-        printf("Loading %s\n\n", trfilename);
+        printf("Loading %s as %ss\n\n", trfilename,
+               (typelabel == NULL ? "float" : typelabel));
         train_db = load_db(trfilename, type, !want_scalar);
         free(trfilename);
         print_db_info(train_db);
 
-        printf("\nLoading %s\n\n", argv[0]);
+        printf("\nLoading %s as %ss\n\n", argv[0],
+               (typelabel == NULL ? "float" : typelabel));
         db = load_db(argv[0], type, !want_scalar);
         memset(db->klass, 0, db->count * sizeof(int));
         print_db_info(db);
