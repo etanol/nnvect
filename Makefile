@@ -3,7 +3,7 @@ CFLAGS    ?= -O3 -fomit-frame-pointer -msse2
 
 PROGRAMS := bench
 
-bench_SOURCES := bench.c db.c nn.c util.c
+bench_SOURCES := bench.c db.c nnseq.c nnvect.c util.c
 
 
 all: $(PROGRAMS)

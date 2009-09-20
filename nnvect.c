@@ -1,60 +1,28 @@
+#include "util.h"
+
 #include <emmintrin.h>
 #include <limits.h>
 #include <float.h>
 
-void nn_float (int dimensions, int trcount, float *trfeatures, int *trclasses,
-               int count, float *features, int *classes)
-{
-        int n, tn;
-        int i, ti;
-        int class, d;
-        float min_distance, dist;
-        float tmp;
-
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = FLT_MAX;
-                class = -1;
-
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = 0.0f;
-                        for (d = 0;  d < dimensions;  d++)
-                        {
-                                tmp = features[i] - trfeatures[ti];
-                                dist += tmp * tmp;
-                        }
-
-                        if (dist < min_distance)
-                        {
-                                min_distance = dist;
-                                class = trclasses[tn];
-                        }
-                }
-                classes[n] = class;
-        }
-}
-
-
-void nn_floats (int dimensions, int trcount, float *trfeatures, int *trclasses,
-                int count, float *features, int *classes)
+void nn_float_vect (int dimensions, int trcount, float *trdata, int *trklass,
+                    int count, float *data, int *klass)
 {
         int n, tn;
         int i, ti;
         float min_distance;
         float distance[4] __attribute__((aligned(16)));
-        int class, d;
+        int cl, d, idx;
         __m128 vec, tvec;
         __m128 tmp1, tmp2;
         __m128 dist;
 
+        debug("Class\tEuclid\tIndex ")
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
                 min_distance = FLT_MAX;
-                class = -1;
+                cl = -1;
+                idx = -1;
 
                 for (tn = 0;  tn < trcount;  tn++)
                 {
@@ -62,8 +30,8 @@ void nn_floats (int dimensions, int trcount, float *trfeatures, int *trclasses,
                         dist = _mm_setzero_ps();
                         for (d = 0;  d < dimensions;  d += 4)
                         {
-                                vec = _mm_load_ps(&features[i + d]);
-                                tvec = _mm_load_ps(&trfeatures[ti + d]);
+                                vec = _mm_load_ps(&data[i + d]);
+                                tvec = _mm_load_ps(&trdata[ti + d]);
                                 tmp1 = _mm_sub_ps(vec, tvec);
                                 tmp2 = _mm_mul_ps(tmp1, tmp1);
                                 dist = _mm_add_ps(dist, tmp2);
@@ -81,10 +49,12 @@ void nn_floats (int dimensions, int trcount, float *trfeatures, int *trclasses,
                         if (distance[0] < min_distance)
                         {
                                 min_distance = distance[0];
-                                class = trclasses[tn];
+                                cl = trklass[tn];
+                                idx = tn;
                         }
                 }
-                classes[n] = class;
+                debug("%d\t%f\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
         }
 }
 
@@ -128,7 +98,6 @@ void nn_shorts (int dimensions, int trcount, short *trfeatures, int *trclasses,
 {
 }
 #endif
-
 
 void nn_bytes (int dimensions, int trcount, char *trfeatures, int *trclasses,
                int count, char *features, int *classes)
@@ -182,4 +151,3 @@ void nn_bytes (int dimensions, int trcount, char *trfeatures, int *trclasses,
                 classes[n] = class;
         }
 }
-
