@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "misc.h"
+#include "util.h"
 
 
 void warning (const char *msg, ...)

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "misc.h"
+#include "util.h"
 
 extern void load_db (char *, float **, int **, int *, int *);
 extern void nn (int, int, float *, int *, int, float *, int **);

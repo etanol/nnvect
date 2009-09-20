@@ -3,7 +3,7 @@ MAKEFLAGS += -R -r
 BASE_CFLAGS := -pipe -MMD -Wall
 CFLAGS := -O0 -g -march=pentium-m
 
-bench: bench.o nn.o db.o misc.o
+bench: bench.o nn.o db.o util.o
 	$(CC) -g -o $@ $^
 
 .SUFFIXES: .c .o
