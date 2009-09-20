@@ -1,9 +1,10 @@
 MAKEFLAGS += -R -r
 CFLAGS    ?= -O3 -fomit-frame-pointer -msse2
+LDFLAGS   += -lm
 
 PROGRAMS := bench
 
-bench_SOURCES := bench.c db.c nnseq.c nnvect.c util.c
+bench_SOURCES := bench.c db.c nnseq.c nnvect.c util.c stats.c
 
 
 all: $(PROGRAMS)

@@ -28,13 +28,6 @@
 #endif
 
 
-static inline float elapsed_time (struct timeval *begin, struct timeval *end)
-{
-        return (end->tv_sec - begin->tv_sec) + (end->tv_usec - begin->tv_usec)
-               * 1.0e-6f;
-}
-
-
 /* Functions doing real work, but not recommended to call directly */
 void  print_message   (const char *, int, int, const char *, ...);
 void *allocate_memory (const char *, int, size_t, size_t);

@@ -1,12 +1,14 @@
 #include "util.h"
 #include "db.h"
 #include "nn.h"
+#include "stats.h"
 
-#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+
+#define DEFAULT_RUNS  3
 
 static char OptString[] = "d:hr:st:";
 
@@ -56,8 +58,10 @@ int main (int argc, char **argv)
 {
         char *progname = argv[0], *trfilename;
         int alen, cmdopt, has_opts;
+        int r, runs = DEFAULT_RUNS;
         struct db *db, *train_db;
-        struct timeval start, finish;
+        struct timestats *ts;
+        struct stats sts;
 
         has_opts = 1;
         while (has_opts)
@@ -70,7 +74,16 @@ int main (int argc, char **argv)
                         break;
                 case 'd':
                 case 'h':
+                        usage(progname);
+                        break;
                 case 'r':
+                        runs = atoi(optarg);
+                        if (runs <= 0)
+                        {
+                                warning("Invalid value for runs: %s", optarg);
+                                runs = DEFAULT_RUNS;
+                        }
+                        break;
                 case 's':
                 case 't':
                         fprintf(stderr, "Option not yet supported -- %c\n", cmdopt);
@@ -110,20 +123,36 @@ int main (int argc, char **argv)
         /* Ignore class data from the file to evaluate */
         memset(db->klass, 0, db->count * sizeof(int));
 
+        ts = stats_prepare(runs);
         printf("NN sequential\n");
-        gettimeofday(&start, NULL);
-        nn_seq(FLOAT, db->dimensions, train_db->count, train_db->data,
-               train_db->klass, db->count, db->data, db->klass);
-        gettimeofday(&finish, NULL);
-        printf("NN took %fs\n", elapsed_time(&start, &finish));
+        for (r = 0;  r < runs;  r++)
+        {
+                stats_start(ts);
+                nn_seq(FLOAT, db->dimensions, train_db->count, train_db->data,
+                       train_db->klass, db->count, db->data, db->klass);
+                stats_stop(ts);
+        }
+        stats_calculate(ts, &sts);
+        printf("Minimum time: %lf secs\n", sts.minimum);
+        printf("Maximum time: %lf secs\n", sts.maximum);
+        printf("Average time: %lf secs\n", sts.mean);
+        printf("Standard deviation: %lf secs\n", sts.deviation);
 
+
+        ts = stats_prepare(runs);
         printf("NN vector\n");
-        gettimeofday(&start, NULL);
-        nn_vect(FLOAT, db->dimensions, train_db->count, train_db->data,
-                train_db->klass, db->count, db->data, db->klass);
-        gettimeofday(&finish, NULL);
-        printf("NN took %fs\n", elapsed_time(&start, &finish));
-
+        for (r = 0;  r < runs;  r++)
+        {
+                stats_start(ts);
+                nn_vect(FLOAT, db->dimensions, train_db->count, train_db->data,
+                        train_db->klass, db->count, db->data, db->klass);
+                stats_stop(ts);
+        }
+        stats_calculate(ts, &sts);
+        printf("Minimum time: %lf secs\n", sts.minimum);
+        printf("Maximum time: %lf secs\n", sts.maximum);
+        printf("Average time: %lf secs\n", sts.mean);
+        printf("Standard deviation: %lf secs\n", sts.deviation);
 
         free_db(train_db);
         free_db(db);
