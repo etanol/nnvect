@@ -70,7 +70,7 @@ void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
         int n, tn;
         int i, ti;
         unsigned int min_distance, distance;
-        int sdist[8] __attribute__((aligned(16)));
+        int sdist[4] __attribute__((aligned(16)));
         int cl, d, idx;
         __m128i vec, tvec;
         __m128i tmp1, tmp2;
@@ -168,8 +168,8 @@ void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
 {
         int n, tn;
         int i, ti;
-        float min_distance, distance;
-        float sdist[4] __attribute__((aligned(16)));
+        float min_distance;
+        float distance __attribute__((aligned(16)));
         int cl, d, idx;
         __m128 vec, tvec;
         __m128 tmp1, tmp2;
@@ -194,13 +194,9 @@ void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
                                 tmp2 = _mm_mul_ps(tmp1, tmp1);
                                 dist = _mm_add_ps(dist, tmp2);
                         }
-                        /*
                         tmp1 = _mm_hadd_ps(dist, _mm_setzero_ps());
                         dist = _mm_hadd_ps(tmp1, _mm_setzero_ps());
                         _mm_store_ss(&distance, dist);
-                        */
-                        _mm_store_ps(sdist, dist);
-                        distance = sdist[0] + sdist[1] + sdist[2] + sdist[3];
                         if (distance < min_distance)
                         {
                                 min_distance = distance;
