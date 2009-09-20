@@ -6,16 +6,16 @@
 #include <stdint.h>
 
 
-/*****************************************************************************/
-/*                                                                           */
-/*                        EUCLIDEAN DISTANCE VERSIONS                        */
-/*                                                                           */
-/*****************************************************************************/
+/******************************************************************************/
+/*                                                                            */
+/*                             UNBLOCKED VERSIONS                             */
+/*                                                                            */
+/******************************************************************************/
 
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
+void nn_byte_vec_U (int dimensions, int trcount, char *trdata, int *trklass,
                     int count, char *data, int *klass)
 {
         int n, tn;
@@ -65,7 +65,7 @@ void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
 }
 
 
-void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
+void nn_short_vec_U (int dimensions, int trcount, short *trdata, int *trklass,
                      int count, short *data, int *klass)
 {
         int n, tn;
@@ -112,7 +112,7 @@ void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
 }
 
 
-void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
+void nn_int_vec_U (int dimensions, int trcount, int *trdata, int *trklass,
                    int count, int *data, int *klass)
 {
         int n, tn;
@@ -161,7 +161,7 @@ void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
+void nn_float_vec_U (int dimensions, int trcount, float *trdata, int *trklass,
                      int count, float *data, int *klass)
 {
         int n, tn;
@@ -208,7 +208,7 @@ void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
+void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
                       int count, double *data, int *klass)
 {
         int n, tn;
@@ -238,252 +238,6 @@ void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
                                 tmp1 = _mm_sub_pd(vec, tvec);
                                 tmp2 = _mm_mul_pd(tmp1, tmp1);
                                 dist = _mm_add_pd(dist, tmp2);
-                        }
-                        _mm_store_pd(sdist, dist);
-                        distance = sdist[0] + sdist[1];
-                        if (distance < min_distance)
-                        {
-                                min_distance = distance;
-                                cl = trklass[tn];
-                                idx = tn;
-                        }
-                }
-                debug("%d\t%lf\t%d ", cl, min_distance, idx);
-                klass[n] = cl;
-        }
-}
-
-
-
-/*****************************************************************************/
-/*                                                                           */
-/*                        MANHATTAN DISTANCE VERSIONS                        */
-/*                                                                           */
-/*****************************************************************************/
-
-
-/******************************  INTEGER VALUES  ******************************/
-
-void nn_byte_vec_M (int dimensions, int trcount, char *trdata, int *trklass,
-                    int count, char *data, int *klass)
-{
-        int n, tn;
-        int i, ti;
-        int cl, d, idx;
-        unsigned int min_distance, distance;
-        short sdist[8] __attribute__((aligned(16)));
-        __m128i vec, tvec;
-        __m128i dist, tmp;
-
-        debug("Class\tDist\tIndex ");
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = UINT_MAX;
-                cl = -1;
-                idx = -1;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = _mm_setzero_si128();
-                        for (d = 0;  d < dimensions;  d += 16)
-                        {
-                                vec = _mm_load_si128((__m128i *) &data[i + d]);
-                                tvec = _mm_load_si128((__m128i *) &trdata[ti + d]);
-                                tmp = _mm_sad_epu8(vec, tvec);
-                                dist = _mm_adds_epi16(dist, tmp);
-                        }
-                        _mm_store_si128((__m128i *) sdist, dist);
-                        distance = sdist[0] + sdist[4];
-                        if (distance < min_distance)
-                        {
-                                min_distance = distance;
-                                cl = trklass[tn];
-                                idx = tn;
-                        }
-                }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
-                klass[n] = cl;
-        }
-}
-
-
-void nn_short_vec_M (int dimensions, int trcount, short *trdata, int *trklass,
-                     int count, short *data, int *klass)
-{
-        int n, tn;
-        int i, ti;
-        int cl, d, idx;
-        unsigned int min_distance;
-        short sdist[8] __attribute__((aligned(16)));
-        __m128i vec, tvec;
-        __m128i dist, tmp, mask;
-
-        debug("Class\tDist\tIndex ");
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = UINT_MAX;
-                cl = -1;
-                idx = -1;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = _mm_setzero_si128();
-                        for (d = 0;  d < dimensions;  d += 8)
-                        {
-                                vec = _mm_load_si128((__m128i *) &data[i + d]);
-                                tvec = _mm_load_si128((__m128i *) &trdata[ti + d]);
-                                tmp = _mm_sub_epi16(vec, tvec);
-                                mask = _mm_srai_epi16(tmp, 15);
-                                tmp = _mm_sub_epi16(_mm_xor_si128(tmp, mask), mask);
-                                dist = _mm_adds_epi16(dist, tmp);
-                        }
-                        tmp = _mm_hadd_epi16(dist, dist);
-                        mask = _mm_hadd_epi16(tmp, tmp);
-                        dist = _mm_hadd_epi16(mask, mask);
-                        _mm_store_si128((__m128i *) sdist, dist);
-                        if (sdist[0] < min_distance)
-                        {
-                                min_distance = sdist[0];
-                                cl = trklass[tn];
-                                idx = tn;
-                        }
-                }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
-                klass[n] = cl;
-        }
-
-}
-
-
-void nn_int_vec_M (int dimensions, int trcount, int *trdata, int *trklass,
-                   int count, int *data, int *klass)
-{
-        int n, tn;
-        int i, ti;
-        int cl, d, idx;
-        unsigned int min_distance;
-        unsigned int sdist[4] __attribute__((aligned(16)));
-        __m128i vec, tvec;
-        __m128i dist, tmp, mask;
-
-        debug("Class\tDist\tIndex ");
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = UINT_MAX;
-                cl = -1;
-                idx = -1;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = _mm_setzero_si128();
-                        for (d = 0;  d < dimensions;  d += 4)
-                        {
-                                vec = _mm_load_si128((__m128i *) &data[i + d]);
-                                tvec = _mm_load_si128((__m128i *) &trdata[ti + d]);
-                                tmp = _mm_sub_epi32(vec, tvec);
-                                mask = _mm_srai_epi32(tmp, 31);
-                                tmp = _mm_sub_epi32(_mm_xor_si128(tmp, mask), mask);
-                                dist = _mm_add_epi32(dist, tmp);
-                        }
-                        tmp = _mm_hadd_epi32(dist, dist);
-                        dist = _mm_hadd_epi32(tmp, tmp);
-                        _mm_store_si128((__m128i *) sdist, dist);
-                        if (sdist[0] < min_distance)
-                        {
-                                min_distance = sdist[0];
-                                cl = trklass[tn];
-                                idx = tn;
-                        }
-                }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
-                klass[n] = cl;
-        }
-}
-
-
-/**************************  FLOATING POINT VALUES  **************************/
-
-void nn_float_vec_M (int dimensions, int trcount, float *trdata, int *trklass,
-                     int count, float *data, int *klass)
-{
-        int n, tn;
-        int i, ti;
-        int cl, d, idx;
-        float min_distance;
-        float distance __attribute__((aligned(16)));
-        __m128 vec, tvec;
-        __m128 dist, tmp, mask;
-
-        mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
-        debug("Class\tDist\tIndex ");
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = FLT_MAX;
-                cl = -1;
-                idx = -1;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = _mm_setzero_ps();
-                        for (d = 0;  d < dimensions;  d += 4)
-                        {
-                                vec = _mm_load_ps(&data[i + d]);
-                                tvec = _mm_load_ps(&trdata[ti + d]);
-                                tmp = _mm_and_ps(_mm_sub_ps(vec, tvec), mask);
-                                dist = _mm_add_ps(dist, tmp);
-                        }
-                        tmp = _mm_hadd_ps(dist, dist);
-                        dist = _mm_hadd_ps(tmp, tmp);
-                        _mm_store_ss(&distance, dist);
-                        if (distance < min_distance)
-                        {
-                                min_distance = distance;
-                                cl = trklass[tn];
-                                idx = tn;
-                        }
-                }
-                debug("%d\t%f\t%d ", cl, min_distance, idx);
-                klass[n] = cl;
-        }
-}
-
-
-void nn_double_vec_M (int dimensions, int trcount, double *trdata, int *trklass,
-                      int count, double *data, int *klass)
-{
-        int n, tn;
-        int i, ti;
-        int cl, d, idx;
-        double min_distance, distance = 0.0;
-        double sdist[2] __attribute__((aligned(16)));
-        __m128d vec, tvec;
-        __m128d dist, tmp, mask;
-        __m128i imask;
-
-        imask = _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128());
-        imask = _mm_srli_epi64(imask, 1);
-        mask = _mm_castsi128_pd(imask);
-        debug("Class\tDist\tIndex ");
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                min_distance = DBL_MAX;
-                cl = -1;
-                idx = -1;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = _mm_setzero_pd();
-                        for (d = 0;  d < dimensions;  d += 2)
-                        {
-                                vec = _mm_load_pd(&data[i + d]);
-                                tvec = _mm_load_pd(&trdata[ti + d]);
-                                tmp = _mm_and_pd(_mm_sub_pd(vec, tvec), mask);
-                                dist = _mm_add_pd(dist, tmp);
                         }
                         _mm_store_pd(sdist, dist);
                         distance = sdist[0] + sdist[1];

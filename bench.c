@@ -11,11 +11,10 @@
 
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "hmo:r:st:";
+static char OptString[] = "ho:r:st:";
 
 static struct option LongOpts[] = {
         { "help",      no_argument,       NULL, 'h' },
-        { "manhattan", no_argument,       NULL, 'm' },
         { "output",    required_argument, NULL, 'o' },
         { "runs",      required_argument, NULL, 'r' },
         { "scalar",    no_argument,       NULL, 's' },
@@ -30,8 +29,6 @@ static void usage (const char *progname)
 "Usage: %s [options] dbfile\n\n"
 "Where possible options are:\n\n"
 "    -h, --help         This help.\n\n"
-"    -m, --manhattan    Use Manhattan distance instead of euclidean distance\n"
-"                       for nearest neighbour search.\n\n"
 "    -o, --output=FILE  Save the calculated results to FILE in order to compare\n"
 "                       them against valid solutions.\n\n"
 "    -r, --runs=N       Execute N runs for statistical purposes.  In the absence\n"
@@ -70,7 +67,6 @@ int main (int argc, char **argv)
         char *progname, *trfilename, *dumpfile, *typelabel;
         int cmdopt, has_opts, want_scalar, r, runs;
         enum valuetype type;
-        enum distancekind kind;
         struct db *db, *train_db;
         struct timestats *ts;
 
@@ -78,7 +74,6 @@ int main (int argc, char **argv)
         dumpfile = NULL;
         runs = 3;
         type = FLOAT;
-        kind = EUCLIDEAN;
         typelabel = NULL;
         want_scalar = 0;
         has_opts = 1;
@@ -93,9 +88,6 @@ int main (int argc, char **argv)
                         break;
                 case 'h':
                         usage(progname);
-                        break;
-                case 'm':
-                        kind = MANHATTAN;
                         break;
                 case 'o':
                         if (dumpfile != NULL)
@@ -155,9 +147,7 @@ int main (int argc, char **argv)
                 usage(progname);
         }
 
-        printf("Using %s NN, calculating %s distance.\n\n",
-               (want_scalar ? "scalar" : "vectorized"),
-               (kind == EUCLIDEAN ? "euclidean" : "manhattan"));
+        printf("Using %s NN.\n\n", (want_scalar ? "scalar" : "vectorized"));
 
         trfilename = xstrcat(argv[0], ".t");
         printf("Loading %s as %ss\n\n", trfilename,
@@ -183,7 +173,7 @@ int main (int argc, char **argv)
                 printf("Run %d of %d ... ", r + 1, runs);
                 fflush(stdout);
                 start_run(ts);
-                nn(type, kind, want_scalar, train_db, db);
+                nn(type, want_scalar, train_db, db);
                 stop_run(ts);
                 printf("%lf s\n", get_last_run_time(ts));
         }

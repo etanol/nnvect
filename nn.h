@@ -11,16 +11,10 @@ enum valuetype
         DOUBLE
 };
 
-enum distancekind
-{
-        EUCLIDEAN,
-        MANHATTAN
-};
-
 /* Forward declaration to avoid cyclic dependencies */
 struct db;
 
 
-void nn (enum valuetype, enum distancekind, int, struct db *, struct db *);
+void nn (enum valuetype, int, struct db *, struct db *);
 
 #endif /* __nnvect_nn */

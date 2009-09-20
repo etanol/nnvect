@@ -6,16 +6,16 @@
 #include <stdint.h>
 
 
-/*****************************************************************************/
-/*                                                                           */
-/*                        EUCLIDEAN DISTANCE VERSIONS                        */
-/*                                                                           */
-/*****************************************************************************/
+/******************************************************************************/
+/*                                                                            */
+/*                             UNBLOCKED VERSIONS                             */
+/*                                                                            */
+/******************************************************************************/
 
 
 /******************************  INTEGER VALUES  ******************************/
 
-void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
+void nn_byte_vec_U (int dimensions, int trcount, char *trdata, int *trklass,
                     int count, char *data, int *klass)
 {
         int n, tn, trcountU;
@@ -110,7 +110,7 @@ void nn_byte_vec_E (int dimensions, int trcount, char *trdata, int *trklass,
 }
 
 
-void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
+void nn_short_vec_U (int dimensions, int trcount, short *trdata, int *trklass,
                      int count, short *data, int *klass)
 {
         int n, tn, trcountU;
@@ -195,7 +195,7 @@ void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
 }
 
 
-void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
+void nn_int_vec_U (int dimensions, int trcount, int *trdata, int *trklass,
                    int count, int *data, int *klass)
 {
         int n, tn, trcountU;
@@ -282,7 +282,7 @@ void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
+void nn_float_vec_U (int dimensions, int trcount, float *trdata, int *trklass,
                      int count, float *data, int *klass)
 {
         int n, tn, trcountU;
@@ -367,7 +367,7 @@ void nn_float_vec_E (int dimensions, int trcount, float *trdata, int *trklass,
 }
 
 
-void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
+void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
                       int count, double *data, int *klass)
 {
         int n, tn, trcountU;
@@ -443,52 +443,5 @@ void nn_double_vec_E (int dimensions, int trcount, double *trdata, int *trklass,
                 debug("%d\t%lf\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
-}
-
-
-
-/*****************************************************************************/
-/*                                                                           */
-/*                        MANHATTAN DISTANCE VERSIONS                        */
-/*                                                                           */
-/*****************************************************************************/
-
-
-/******************************  INTEGER VALUES  ******************************/
-
-void nn_byte_vec_M (int dimensions, int trcount, char *trdata, int *trklass,
-                    int count, char *data, int *klass)
-{
-        quit("Manhattan distance using vector bytes, not implemented");
-}
-
-
-void nn_short_vec_M (int dimensions, int trcount, short *trdata, int *trklass,
-                     int count, short *data, int *klass)
-{
-        quit("Manhattan distance using vector shorts, not implemented");
-}
-
-
-void nn_int_vec_M (int dimensions, int trcount, int *trdata, int *trklass,
-                   int count, int *data, int *klass)
-{
-        quit("Manhattan distance using vector integers, not implemented");
-}
-
-
-/**************************  FLOATING POINT VALUES  **************************/
-
-void nn_float_vec_M (int dimensions, int trcount, float *trdata, int *trklass,
-                     int count, float *data, int *klass)
-{
-        quit("Manhattan distance using vector floats, not implemented");
-}
-
-
-void nn_double_vec_M (int dimensions, int trcount, double *trdata, int *trklass,
-                      int count, double *data, int *klass)
-{
-        quit("Manhattan distance using vector doubles, not implemented");
 }
 

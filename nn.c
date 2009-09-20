@@ -8,77 +8,41 @@
 
 
 /* Sequential versions defined at nnseq.c */
-DECLARE(nn_byte_sca_E);
-DECLARE(nn_byte_sca_M);
-DECLARE(nn_short_sca_E);
-DECLARE(nn_short_sca_M);
-DECLARE(nn_int_sca_E);
-DECLARE(nn_int_sca_M);
-DECLARE(nn_float_sca_E);
-DECLARE(nn_float_sca_M);
-DECLARE(nn_double_sca_E);
-DECLARE(nn_double_sca_M);
+DECLARE(nn_byte_sca_U);
+DECLARE(nn_short_sca_U);
+DECLARE(nn_int_sca_U);
+DECLARE(nn_float_sca_U);
+DECLARE(nn_double_sca_U);
 
 /* Vectorized versions defined at nnvect.c */
-DECLARE(nn_byte_vec_E);
-DECLARE(nn_byte_vec_M);
-DECLARE(nn_short_vec_E);
-DECLARE(nn_short_vec_M);
-DECLARE(nn_int_vec_E);
-DECLARE(nn_int_vec_M);
-DECLARE(nn_float_vec_E);
-DECLARE(nn_float_vec_M);
-DECLARE(nn_double_vec_E);
-DECLARE(nn_double_vec_M);
+DECLARE(nn_byte_vec_U);
+DECLARE(nn_short_vec_U);
+DECLARE(nn_int_vec_U);
+DECLARE(nn_float_vec_U);
+DECLARE(nn_double_vec_U);
 
 
-void nn (enum valuetype type, enum distancekind kind, int scalar,
-         struct db *trdb, struct db *db)
+void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
 {
         void (*func) (int, int, void *, int *, int, void *, int *);
 
         func = NULL;
-        switch (kind)
+        switch (type)
         {
-        case EUCLIDEAN:
-                switch (type)
-                {
-                case BYTE:
-                        func = (scalar ? nn_byte_sca_E : nn_byte_vec_E);
-                        break;
-                case SHORT:
-                        func = (scalar ? nn_short_sca_E : nn_short_vec_E);
-                        break;
-                case INT:
-                        func = (scalar ? nn_int_sca_E : nn_int_vec_E);
-                        break;
-                case FLOAT:
-                        func = (scalar ? nn_float_sca_E : nn_float_vec_E);
-                        break;
-                case DOUBLE:
-                        func = (scalar ? nn_double_sca_E : nn_double_vec_E);
-                        break;
-                }
+        case BYTE:
+                func = (scalar ? nn_byte_sca_U : nn_byte_vec_U);
                 break;
-        case MANHATTAN:
-                switch (type)
-                {
-                case BYTE:
-                        func = (scalar ? nn_byte_sca_M : nn_byte_vec_M);
-                        break;
-                case SHORT:
-                        func = (scalar ? nn_short_sca_M : nn_short_vec_M);
-                        break;
-                case INT:
-                        func = (scalar ? nn_int_sca_M : nn_int_vec_M);
-                        break;
-                case FLOAT:
-                        func = (scalar ? nn_float_sca_M : nn_float_vec_M);
-                        break;
-                case DOUBLE:
-                        func = (scalar ? nn_double_sca_M : nn_double_vec_M);
-                        break;
-                }
+        case SHORT:
+                func = (scalar ? nn_short_sca_U : nn_short_vec_U);
+                break;
+        case INT:
+                func = (scalar ? nn_int_sca_U : nn_int_vec_U);
+                break;
+        case FLOAT:
+                func = (scalar ? nn_float_sca_U : nn_float_vec_U);
+                break;
+        case DOUBLE:
+                func = (scalar ? nn_double_sca_U : nn_double_vec_U);
                 break;
         }
 
