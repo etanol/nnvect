@@ -82,7 +82,7 @@ void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
                 if (func == NULL)
                         quit("Invalid combination of implementation and value type, with blocking");
 
-                clear_tmp_distances(trdb);
+                clear_tmp_distances(db);
                 func(db->dimensions, trdb->count, trdb->block_items, trdb->data,
                      trdb->klass, db->count, db->data, db->klass, db->distance);
         }
