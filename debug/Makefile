@@ -1,6 +1,6 @@
 vpath %.c ..
 
-CFLAGS  := -O0 -g -msse2 -iquote ..
+CFLAGS  := -O0 -g -iquote ..
 LDFLAGS := -g
 
 include ../Makefile

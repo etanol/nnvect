@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 
 
 void print_message (const char *file, int line, int severity,
@@ -56,9 +55,9 @@ void *allocate_memory (const char *file, int line, size_t alignment,
         mem = malloc(bytes);
 #else
         if (alignment > 0)
-                mem = memalign(alignment, bytes);
-        else
                 mem = malloc(bytes);
+        else
+                mem = memalign(alignment, bytes);
 #endif
 
         if (mem == NULL)

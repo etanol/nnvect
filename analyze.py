@@ -72,20 +72,16 @@ if len(sys.argv) <= 1:
 filelist = []
 for argument in sys.argv[1:]:
         if os.path.isdir(argument):
-                for dent in os.walk(argument):
-                        for f in dent[2]:
-                                if not f.endswith(Info.SUFFIX) and \
-                                   not f.endswith(".t"):
-                                        filelist.append(os.path.join(dent[0], f))
+                for step in os.walk(argument):
+                        for f in step[2]:
+                                if not f.endswith(Info.SUFFIX):
+                                        filelist.append(os.path.join(step[0], f))
         elif os.path.isfile(argument):
-                if argument.endswith(".t"):
-                        filelist.append(argument[:-2])
-                else:
-                        filelist.append(argument)
+                filelist.append(argument)
         else:
                 print "Ignoring %s" % argument
 
-print "Examining %d pairs" % len(filelist)
+print "Examining %d files" % len(filelist)
 for path in filelist:
         if os.path.isfile(path + Info.SUFFIX) and \
            os.path.getmtime(path + Info.SUFFIX) > os.path.getmtime(path):
@@ -95,12 +91,6 @@ for path in filelist:
         try:
                 print "Analyzing %s" % path
                 blas = analyze(path)
-                print "Analyzing %s.t" % path
-                trblas = analyze(path + ".t")
-                blas.indices = max(trblas.indices, blas.indices)
-                blas.floats = blas.floats or trblas.floats
-                trblas.indices = blas.indices
-                trblas.floats = blas.floats
         except OSError, e:
                 print "ERROR: Could not open %s: %s" % (path, e)
                 continue
@@ -110,7 +100,6 @@ for path in filelist:
 
         try:
                 save(blas, path + Info.SUFFIX)
-                save(trblas, path + ".t" + Info.SUFFIX)
         except OSError, e:
                 print "ERROR: System error when saving %s: %s" % (path + Info.SUFFIX, e)
         except IOError, e:

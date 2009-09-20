@@ -3,7 +3,7 @@
 
 enum datatype
 {
-        BYTE,
+        BYTE = 1,
         SHORT,
         INTEGER,
         FLOAT,
