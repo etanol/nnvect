@@ -129,15 +129,13 @@ static void read_data (struct file *file, struct db *db)
 struct db *load_db (const char *filename, enum datatype type)
 {
         char *infoname;
-        int len, rowsize = 0;
+        int rowsize = 0;
         struct db *db;
         struct file file;
 
         db = xmalloc(sizeof(struct db));
 
-        len = strlen(filename);
-        infoname = xmalloc(len + 7);
-        snprintf(infoname, len + 6, "%s.info", filename);
+        infoname = xstrcat(filename, ".info");
         open_file(infoname, &file);
         read_info(&file, db);
         close_file(&file);
@@ -179,11 +177,11 @@ struct db *load_db (const char *filename, enum datatype type)
                 break;
         case FLOAT:
                 rowsize = PADDED(db->real_dimensions * sizeof(float));
-                db->dimensions = rowsize / sizeof(int);
+                db->dimensions = rowsize / sizeof(float);
                 break;
         case DOUBLE:
-                rowsize = PADDED(db->real_dimensions * sizeof(float));
-                db->dimensions = rowsize / sizeof(int);
+                rowsize = PADDED(db->real_dimensions * sizeof(double));
+                db->dimensions = rowsize / sizeof(double);
                 break;
         }
 
