@@ -112,15 +112,15 @@ int main (int argc, char **argv)
 
         printf("NN sequential\n");
         gettimeofday(&start, NULL);
-        nn_float_seq(db->dimensions, train_db->count, train_db->data,
-                     train_db->klass, db->count, db->data, db->klass);
+        nn_seq(FLOAT, db->dimensions, train_db->count, train_db->data,
+               train_db->klass, db->count, db->data, db->klass);
         gettimeofday(&finish, NULL);
         printf("NN took %fs\n", elapsed_time(&start, &finish));
 
         printf("NN vector\n");
         gettimeofday(&start, NULL);
-        nn_float_vect(db->dimensions, train_db->count, train_db->data,
-                      train_db->klass, db->count, db->data, db->klass);
+        nn_vect(FLOAT, db->dimensions, train_db->count, train_db->data,
+                train_db->klass, db->count, db->data, db->klass);
         gettimeofday(&finish, NULL);
         printf("NN took %fs\n", elapsed_time(&start, &finish));
 

@@ -1,14 +1,7 @@
 #ifndef __nnvect_db
 #define __nnvect_db
 
-enum datatype
-{
-        BYTE = 1,
-        SHORT,
-        INTEGER,
-        FLOAT,
-        DOUBLE
-};
+#include "nn.h"
 
 struct db
 {
