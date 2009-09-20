@@ -19,14 +19,14 @@ void nn_byte_seq_E (int dimensions, int trcount, char *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        int min_distance, dist;
+        unsigned int min_distance, dist;
         char tmp;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = INT_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -45,7 +45,7 @@ void nn_byte_seq_E (int dimensions, int trcount, char *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%d\t%d ", cl, min_distance, idx);
+                debug("%d\t%u\t%d ", cl, min_distance, idx);
         }
 }
 
@@ -56,14 +56,14 @@ void nn_short_seq_E (int dimensions, int trcount, short *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        int min_distance, dist;
+        unsigned int min_distance, dist;
         short tmp;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = INT_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -82,7 +82,7 @@ void nn_short_seq_E (int dimensions, int trcount, short *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%d\t%d ", cl, min_distance, idx);
+                debug("%d\t%u\t%d ", cl, min_distance, idx);
         }
 }
 
@@ -93,13 +93,14 @@ void nn_int_seq_E (int dimensions, int trcount, int *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        int min_distance, dist, tmp;
+        unsigned int min_distance, dist;
+        int tmp;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = INT_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -118,7 +119,7 @@ void nn_int_seq_E (int dimensions, int trcount, int *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%d\t%d ", cl, min_distance, idx);
+                debug("%d\t%u\t%d ", cl, min_distance, idx);
         }
 }
 
@@ -217,14 +218,14 @@ void nn_byte_seq_M (int dimensions, int trcount, char *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        char min_distance, dist;
+        unsigned int min_distance, dist;
         char tmp, mask;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = CHAR_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -233,7 +234,7 @@ void nn_byte_seq_M (int dimensions, int trcount, char *trdata, int *trklass,
                         dist = 0;
                         for (d = 0;  d < dimensions;  d++)
                         {
-                                tmp = data[i + d] - trdata[i + d];
+                                tmp = data[i + d] - trdata[ti + d];
                                 mask = tmp >> (sizeof(char) * CHAR_BIT - 1);
                                 dist += (tmp ^ mask) - mask;
                         }
@@ -256,14 +257,14 @@ void nn_short_seq_M (int dimensions, int trcount, short *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        short min_distance, dist;
+        unsigned int min_distance, dist;
         short tmp, mask;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = CHAR_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -272,7 +273,7 @@ void nn_short_seq_M (int dimensions, int trcount, short *trdata, int *trklass,
                         dist = 0;
                         for (d = 0;  d < dimensions;  d++)
                         {
-                                tmp = data[i + d] - trdata[i + d];
+                                tmp = data[i + d] - trdata[ti + d];
                                 mask = tmp >> (sizeof(short) * CHAR_BIT - 1);
                                 dist += (tmp ^ mask) - mask;
                         }
@@ -295,14 +296,14 @@ void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
         int n, tn;
         int i, ti;
         int cl, d, idx;
-        int min_distance, dist;
+        unsigned int min_distance, dist;
         int tmp, mask;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = CHAR_MAX;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -311,7 +312,7 @@ void nn_int_seq_M (int dimensions, int trcount, int *trdata, int *trklass,
                         dist = 0;
                         for (d = 0;  d < dimensions;  d++)
                         {
-                                tmp = data[i + d] - trdata[i + d];
+                                tmp = data[i + d] - trdata[ti + d];
                                 mask = tmp >> (sizeof(int) * CHAR_BIT - 1);
                                 dist += (tmp ^ mask) - mask;
                         }
