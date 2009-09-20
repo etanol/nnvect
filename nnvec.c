@@ -15,6 +15,53 @@
 
 /******************************  INTEGER VALUES  ******************************/
 
+void nn_short_vec_E (int dimensions, int trcount, short *trdata, int *trklass,
+                     int count, short *data, int *klass)
+{
+        int n, tn;
+        int i, ti;
+        unsigned int min_distance, distance;
+        short sdist[8] __attribute__((aligned(16)));
+        int cl, d, idx;
+        __m128i vec, tvec;
+        __m128i tmp1, tmp2;
+        __m128i dist;
+
+        debug("Class\tDist\tIndex ");
+        for (n = 0;  n < count;  n++)
+        {
+                i = n * dimensions;
+                min_distance = UINT_MAX;
+                cl = -1;
+                idx = -1;
+                for (tn = 0;  tn < trcount;  tn++)
+                {
+                        ti = tn * dimensions;
+                        dist = _mm_setzero_si128();
+                        for (d = 0;  d < dimensions;  d += 8)
+                        {
+                                vec = _mm_load_si128((__m128i *) &data[i + d]);
+                                tvec = _mm_load_si128((__m128i *) &trdata[ti + d]);
+                                tmp1 = _mm_sub_epi16(vec, tvec);
+                                tmp2 = _mm_mullo_epi16(tmp1, tmp1);
+                                dist = _mm_adds_epu16(dist, tmp2);
+                        }
+                        _mm_store_si128((__m128i *) sdist, dist);
+                        distance = sdist[0] + sdist[1] + sdist[2] + sdist[3] +
+                                   sdist[4] + sdist[5] + sdist[6] + sdist[7];
+                        if (distance < min_distance)
+                        {
+                                min_distance = distance;
+                                cl = trklass[tn];
+                                idx = tn;
+                        }
+                }
+                debug("%d\t%u\t%d ", cl, min_distance, idx);
+                klass[n] = cl;
+        }
+}
+
+
 void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
                    int count, int *data, int *klass)
 {
