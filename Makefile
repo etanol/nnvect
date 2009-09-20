@@ -2,9 +2,10 @@ MAKEFLAGS += -R -r
 CFLAGS    ?= -O3 -fomit-frame-pointer -msse4.1
 LDFLAGS   += -lm
 
-PROGRAMS := simple
+PROGRAMS := simple unroll4
 
 simple_SOURCES := bench.c db.c nn.c util.c stats.c nnsca-simple.c nnvec-simple.c
+unroll4_SOURCES := bench.c db.c nn.c util.c stats.c nnsca-unroll4.c nnvec-unroll4.c
 
 
 all: $(PROGRAMS)
