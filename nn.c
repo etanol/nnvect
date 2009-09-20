@@ -20,7 +20,7 @@ DECLARE(nn_double_sca_E);
 DECLARE(nn_double_sca_M);
 
 /* Vectorized versions defined at nnvect.c */
-//DECLARE(nn_byte_vec_E);
+DECLARE(nn_byte_vec_E);
 DECLARE(nn_byte_vec_M);
 DECLARE(nn_short_vec_E);
 DECLARE(nn_short_vec_M);
@@ -44,7 +44,7 @@ void nn (enum valuetype type, enum distancekind kind, int scalar,
                 switch (type)
                 {
                 case BYTE:
-                        func = (scalar ? nn_byte_sca_E : NULL);
+                        func = (scalar ? nn_byte_sca_E : nn_byte_vec_E);
                         break;
                 case SHORT:
                         func = (scalar ? nn_short_sca_E : nn_short_vec_E);
