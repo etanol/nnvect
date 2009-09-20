@@ -242,7 +242,7 @@ void print_db_info (struct db *db)
                 printf("    Each block has %d elements (%u bytes)\n",
                        db->block_items, blocksize);
         else
-                printf("    Blocking not requested or needed\n");
+                printf("    Blocking not requested, unneeded, or too small block size\n");
 }
 
 
