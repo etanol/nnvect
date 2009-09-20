@@ -41,8 +41,8 @@ static void usage (const char *progname)
 "                         %d  INTEGER (%d bytes)\n"
 "                         %d  FLOAT   (%d bytes)\n"
 "                         %d  DOUBLE  (%d bytes)\n"
-"                     Only numeric values are accepted.  By default, INTEGER and\n"
-"                     FLOAT are used where appropriate.\n\n"
+"                     Only numeric values are accepted.  By default, FLOAT is\n"
+"                     used.\n\n"
 "NOTE: Just a single file needs to be specified as input.  However, the files\n"
 "      \"dbfile.info\", \"dbfile.t\" and \"dbfile.t.info\" are assumed to reside\n"
 "      under the same path as \"dbfile\".\n\n", progname,
@@ -56,14 +56,21 @@ static void usage (const char *progname)
 
 int main (int argc, char **argv)
 {
-        char *progname = argv[0], *trfilename;
-        int alen, cmdopt, has_opts;
-        int r, runs = DEFAULT_RUNS;
+        char *progname, *trfilename, *dumpfile, *typelabel;
+        int cmdopt, has_opts, want_sequential, r, runs;
+        enum datatype type;
         struct db *db, *train_db;
         struct timestats *ts;
         struct stats sts;
 
+        progname = argv[0];
+        dumpfile = NULL;
+        runs = 3;
+        type = FLOAT;
+        typelabel = "FLOAT";
+        want_sequential = 0;
         has_opts = 1;
+
         while (has_opts)
         {
                 cmdopt = getopt_long(argc, argv, OptString, LongOpts, NULL);
@@ -73,21 +80,40 @@ int main (int argc, char **argv)
                         has_opts = 0;
                         break;
                 case 'd':
+                        if (dumpfile != NULL)
+                                free(dumpfile);
+                        dumpfile = xstrcat(optarg, NULL);
+                        runs = 1;
+                        break;
                 case 'h':
                         usage(progname);
                         break;
                 case 'r':
-                        runs = atoi(optarg);
-                        if (runs <= 0)
+                        if (dumpfile == NULL)
                         {
-                                warning("Invalid value for runs: %s", optarg);
-                                runs = DEFAULT_RUNS;
+                                runs = atoi(optarg);
+                                if (runs <= 0)
+                                {
+                                        runs = DEFAULT_RUNS;
+                                        warning("Invalid value for runs: %s",
+                                                optarg);
+                                }
                         }
                         break;
                 case 's':
+                        want_sequential = 1;
+                        break;
                 case 't':
-                        fprintf(stderr, "Option not yet supported -- %c\n", cmdopt);
-                        return EXIT_FAILURE;
+                        switch (atoi(optarg))
+                        {
+                        case BYTE:    type = BYTE;    typelabel = "BYTE";    break;
+                        case SHORT:   type = SHORT;   typelabel = "SHORT";   break;
+                        case INTEGER: type = INTEGER; typelabel = "INTEGER"; break;
+                        case FLOAT:   type = FLOAT;   typelabel = "FLOAT";   break;
+                        case DOUBLE:  type = DOUBLE;  typelabel = "DOUBLE";  break;
+                        default: quit("Invalid type: %s", optarg);
+                        }
+                        break;
                 case '?':
                         fputs("\n", stderr);
                         usage(progname);
@@ -106,64 +132,61 @@ int main (int argc, char **argv)
                 usage(progname);
         }
 
-        alen = strlen(argv[0]);
-        trfilename = xmalloc(alen + 4);
-        snprintf(trfilename, alen + 3, "%s.t", argv[0]);
-        printf("Loading %s\n", trfilename);
-        train_db = load_db(trfilename, FLOAT);
+        trfilename = xstrcat(argv[0], ".t");
+        printf("Loading %s as %s\n", trfilename, typelabel);
+        train_db = load_db(trfilename, type);
         free(trfilename);
 
-        printf("Loading %s\n", argv[0]);
-        db = load_db(argv[0], FLOAT);
+        printf("Loading %s as %s\n\n", argv[0], typelabel);
+        db = load_db(argv[0], type);
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
                       train_db->dimensions);
 
-        /* Ignore class data from the file to evaluate */
-        memset(db->klass, 0, db->count * sizeof(int));
-
         ts = stats_prepare(runs);
-        printf("NN sequential\n");
         for (r = 0;  r < runs;  r++)
         {
-                stats_start(ts);
-                nn_seq(FLOAT, db->dimensions, train_db->count, train_db->data,
-                       train_db->klass, db->count, db->data, db->klass);
-                stats_stop(ts);
+                printf("Run %d of %d\n", r + 1, runs);
+                if (want_sequential)
+                {
+                        stats_start(ts);
+                        nn_seq(type, db->dimensions, train_db->count,
+                               train_db->data, train_db->klass, db->count,
+                               db->data, db->klass);
+                        stats_stop(ts);
+                }
+                else
+                {
+                        stats_start(ts);
+                        nn_vect(type, db->dimensions, train_db->count,
+                                train_db->data, train_db->klass, db->count,
+                                db->data, db->klass);
+                        stats_stop(ts);
+                }
         }
         stats_calculate(ts, &sts);
-        printf("Minimum time: %lf secs\n", sts.minimum);
-        printf("Maximum time: %lf secs\n", sts.maximum);
-        printf("Average time: %lf secs\n", sts.mean);
-        printf("Standard deviation: %lf secs\n", sts.deviation);
+        printf("\nStatistics\n\n");
+        printf("- Minimum time: %lf secs\n", sts.minimum);
+        printf("- Maximum time: %lf secs\n", sts.maximum);
+        printf("- Average time: %lf secs\n", sts.mean);
+        printf("- Standard deviation: %lf secs\n\n", sts.deviation);
 
-
-        ts = stats_prepare(runs);
-        printf("NN vector\n");
-        for (r = 0;  r < runs;  r++)
+        if (dumpfile != NULL)
         {
-                stats_start(ts);
-                nn_vect(FLOAT, db->dimensions, train_db->count, train_db->data,
-                        train_db->klass, db->count, db->data, db->klass);
-                stats_stop(ts);
+                int i;
+                FILE *f;
+
+                f = fopen(dumpfile, "w");
+                if (f == NULL)
+                        fatal("Could not open %s", dumpfile);
+                for (i = 0;  i < db->count;  i++)
+                        fprintf(f, "%d\n", db->klass[i]);
+                fclose(f);
         }
-        stats_calculate(ts, &sts);
-        printf("Minimum time: %lf secs\n", sts.minimum);
-        printf("Maximum time: %lf secs\n", sts.maximum);
-        printf("Average time: %lf secs\n", sts.mean);
-        printf("Standard deviation: %lf secs\n", sts.deviation);
 
         free_db(train_db);
         free_db(db);
-        /*
-        printf("Verifying\n");
-        for (i = 0;  i < count;  i++)
-                if (classes[i] != computed_classes[i])
-                        printf("classes[%d] = %d,  computed_classes[%d] = %d\n",
-                               i, classes[i], i, computed_classes[i]);
-
-        */
         return EXIT_SUCCESS;
 }
 
