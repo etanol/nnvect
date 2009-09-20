@@ -1,5 +1,5 @@
 MAKEFLAGS += -R -r
-CFLAGS    ?= -O3 -fomit-frame-pointer -mssse3
+CFLAGS    ?= -O3 -fomit-frame-pointer -msse4.1
 LDFLAGS   += -lm
 
 PROGRAMS := bench

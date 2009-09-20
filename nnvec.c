@@ -1,6 +1,6 @@
 #include "util.h"
 
-#include <tmmintrin.h>
+#include <smmintrin.h>
 #include <limits.h>
 #include <float.h>
 #include <stdint.h>
@@ -117,18 +117,18 @@ void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
 {
         int n, tn;
         int i, ti;
-        uint64_t min_distance, distance;
-        uint64_t sdist[2] __attribute__((aligned(16)));
+        unsigned int min_distance;
+        int sdist[4] __attribute__((aligned(16)));
         int cl, d, idx;
         __m128i vec, tvec;
-        __m128i tmp1, tmp2, mask;
+        __m128i tmp1, tmp2;
         __m128i dist;
 
         debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = ~0ULL;
+                min_distance = UINT_MAX;
                 cl = -1;
                 idx = -1;
                 for (tn = 0;  tn < trcount;  tn++)
@@ -140,24 +140,20 @@ void nn_int_vec_E (int dimensions, int trcount, int *trdata, int *trklass,
                                 vec = _mm_load_si128((__m128i *) &data[i + d]);
                                 tvec = _mm_load_si128((__m128i *) &trdata[ti + d]);
                                 tmp1 = _mm_sub_epi32(vec, tvec);
-                                mask = _mm_srai_epi32(tmp1, 31);
-                                tmp1 = _mm_sub_epi32(_mm_xor_si128(tmp1, mask), mask);
-                                tmp2 = _mm_mul_epu32(tmp1, tmp1);
-                                dist = _mm_add_epi64(dist, tmp2);
-                                tmp1 = _mm_slli_si128(tmp1, 4);
-                                tmp2 = _mm_mul_epu32(tmp1, tmp1);
-                                dist = _mm_add_epi64(dist, tmp2);
+                                tmp2 = _mm_mullo_epi32(tmp1, tmp1);
+                                dist = _mm_add_epi32(dist, tmp2);
                         }
+                        tmp1 = _mm_hadd_epi32(dist, dist);
+                        dist = _mm_hadd_epi32(tmp1, tmp1);
                         _mm_store_si128((__m128i *) sdist, dist);
-                        distance = sdist[0] + sdist[1];
-                        if (distance < min_distance)
+                        if (sdist[0] < min_distance)
                         {
-                                min_distance = distance;
+                                min_distance = sdist[0];
                                 cl = trklass[tn];
                                 idx = tn;
                         }
                 }
-                debug("%d\t%llu\t%d ", cl, min_distance, idx);
+                debug("%d\t%u\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
