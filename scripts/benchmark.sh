@@ -32,6 +32,7 @@ do
                 for bmegs in 0 4
                 do
                     output=${p}outputs/`basename $f`-$impl-$mode-b$bmegs-$t
+                    test -f $output && continue
                     bs=`expr $bmegs '*' 1024 '*' 1024`
                     ./$p$impl --runs=$runs --type=$t $sf --blocksize=$bs $f | tee $output
                 done
