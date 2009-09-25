@@ -36,3 +36,15 @@ plot newhistogram "Simple", \
      newhistogram "Unroll 4", \
          plot_data u 4:xtic(1) lt 1, '' u 10 lt 2, '' u 7 lt 3, '' u 13 lt 4
 
+
+set title plot_title." (III)"
+set output plot_output."-3.png"
+
+plot newhistogram "Scalar", \
+         plot_data u 2:xtic(1) t "Unblocked simple", '' u 3 t "Unblocked unroll 2", \
+         '' u 4 t "Unblocked unroll 4", '' u 8 t "Blocked simple", \
+         '' u 9 t "Blocked unroll 2", '' u 10 t "Blocked unroll 4", \
+     newhistogram "Vectorized", \
+         plot_data u 5:xtic(1) lt 1, '' u 6 lt 2, '' u 7 lt 3, '' u 11 lt 4, \
+         '' u 12 lt 5, '' u 13 lt 6
+
