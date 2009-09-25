@@ -1,0 +1,27 @@
+sans = "/usr/share/fonts/truetype/ttf-liberation/LiberationSans-Regular.ttf"
+set terminal png font sans 12 size 1000,500
+
+set style data histograms
+set style histogram cluster gap 2
+set style fill solid 0.2
+set boxwidth 0.8 relative
+set key vertical top rmargin Left reverse
+set key autotitle columnheader
+
+set autoscale
+set yrange [0:]
+set xtic nomirror rotate by -45 scale 0
+set ytic mirror
+set ylabel "Time (seconds)"
+set grid y
+
+set datafile separator ":"
+set title plot_title
+set output plot_output."-1.png"
+
+plot newhistogram "Unblocked", \
+         plot_data using 2:xtic(1), '' u 3, '' u 4, '' u 5, '' u 6, '' u 7, \
+     newhistogram "Blocked", \
+         plot_data using 8:xtic(1) linetype 1 notitle, '' u 9 lt 2 not, \
+         '' u 10 lt 3 not, '' u 11 lt 4 not, '' u 12 lt 5 not, '' u 13 lt 6 not
+
