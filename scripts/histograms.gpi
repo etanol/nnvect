@@ -2,26 +2,37 @@ sans = "/usr/share/fonts/truetype/ttf-liberation/LiberationSans-Regular.ttf"
 set terminal png font sans 12 size 1000,500
 
 set style data histograms
-set style histogram cluster gap 2
+set style histogram clustered gap 2
 set style fill solid 0.2
 set boxwidth 0.8 relative
-set key vertical top rmargin Left reverse
-set key autotitle columnheader
+set key vertical top rmargin Left reverse noautotitle
 
 set autoscale
 set yrange [0:]
-set xtic nomirror rotate by -45 scale 0
-set ytic mirror
+set xtics nomirror out rotate by -45
+set ytics mirror
 set ylabel "Time (seconds)"
 set grid y
 
-set datafile separator ":"
-set title plot_title
+set title plot_title." (I)"
 set output plot_output."-1.png"
 
 plot newhistogram "Unblocked", \
-         plot_data using 2:xtic(1), '' u 3, '' u 4, '' u 5, '' u 6, '' u 7, \
+         plot_data u 2:xtic(1) t "Scalar simple", '' u 3 t "Scalar unroll 2", \
+         '' u 4 t "Scalar unroll 4", '' u 5 t "Vectorized simple", \
+         '' u 6 t "Vectorized unroll 2", '' u 7 t "Vectorized unroll 4", \
      newhistogram "Blocked", \
-         plot_data using 8:xtic(1) linetype 1 notitle, '' u 9 lt 2 not, \
-         '' u 10 lt 3 not, '' u 11 lt 4 not, '' u 12 lt 5 not, '' u 13 lt 6 not
+         plot_data u 8:xtic(1) lt 1, '' u 9 lt 2, '' u 10 lt 3, '' u 11 lt 4, \
+         '' u 12 lt 5, '' u 13 lt 6
+
+set title plot_title." (II)"
+set output plot_output."-2.png"
+
+plot newhistogram "Simple", \
+         plot_data u 2:xtic(1) t "Scalar unblocked", '' u 8 t "Scalar blocked", \
+         '' u 5 t "Vectorized unblocked", '' u 11 t "Vectorized blocked", \
+     newhistogram "Unroll 2", \
+         plot_data u 3:xtic(1) lt 1, '' u 9 lt 2, '' u 6 lt 3, '' u 12 lt 4, \
+     newhistogram "Unroll 4", \
+         plot_data u 4:xtic(1) lt 1, '' u 10 lt 2, '' u 7 lt 3, '' u 13 lt 4
 

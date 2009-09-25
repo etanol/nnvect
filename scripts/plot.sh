@@ -3,7 +3,6 @@
 P=`dirname $0`/..
 test -d $P/plots || mkdir $P/plots
 
-table_header='Type:Scalar simple:Scalar unroll2:Scalar unroll4:Vectorized simple:Vectorized unroll2:Vectorized unroll4:x:x:x:x:x:x:'
 files=`ls $P/sample_nn_data/*.tst | sed 's/\.tst$//'`
 
 for f in $files
@@ -18,7 +17,6 @@ do
 
     name=`basename $f`
     table=$P/plots/table-$name.txt
-    printf "$table_header\n" >$table
 
     for t in $types
     do
@@ -36,12 +34,12 @@ do
                     else
                         time='-'
                     fi
-                    printf ":$time"
+                    printf "  $time"
                 done
             done
         done
         printf "\n"
-    done >>$table
+    done >$table
 
     gnuplot - $P/scripts/histograms.gpi <<EOP
         plot_title  = "$name"
