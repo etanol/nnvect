@@ -1,16 +1,9 @@
 #!/bin/sh
 
-runs=5
-wd=`pwd`
-p=
-if [ `basename $wd` = scripts ]
-then
-    p=../
-fi
+P=`dirname $0`/..
+test -d $P/outputs || mkdir $P/outputs
 
-test -d ${p}outputs || mkdir ${p}outputs
-
-files=`ls ${p}sample_nn_data/*.tst | sed 's/\.tst$//'`
+files=`ls $P/sample_nn_data/*.tst | sed 's/\.tst$//'`
 
 for f in $files
 do
@@ -31,10 +24,10 @@ do
             do
                 for bmegs in 0 4
                 do
-                    output=${p}outputs/`basename $f`-$impl-$mode-b$bmegs-$t
+                    output=$P/outputs/`basename $f`-$impl-$mode-b$bmegs-$t
                     test -f $output && continue
                     bs=`expr $bmegs '*' 1024 '*' 1024`
-                    ./$p$impl --runs=$runs --type=$t $sf --blocksize=$bs $f | tee $output
+                    $P/$impl --runs=5 --type=$t $sf --blocksize=$bs $f | tee $output
                 done
             done
             sf=
