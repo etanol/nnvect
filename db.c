@@ -90,30 +90,50 @@ static void read_data (struct file *file, struct db *db)
                 while (*c == ' ' || *c == '\t')
                         c++;
                 db->klass[lc] = (int) strtol(c, &next, 10);
+                if (db->klass[lc] == 0 && c == next)
+                        fatal("Parsing index %d \"%10s...\"", lc, c);
                 c = next;
                 while (*c == ' ' || *c == '\t')
                         c++;
                 while (*c != '\n')
                 {
                         dim = (int) strtol(c, &next, 10);
+                        if (dim == 0 && c == next)
+                                fatal("Parsing dimension at %d \"%10s...\"",
+                                      dim, lc, c);
                         i = lc * db->dimensions + (dim - 1);
                         c = next + 1;
                         switch (db->type)
                         {
                         case BYTE:
                                 ((char *) db->data)[i] = (char) strtol(c, &next, 10);
+                                if (((char *) db->data)[i] == 0 && c == next)
+                                        fatal("Parsing char value at %d, %d \"%10s...\"",
+                                              lc, dim, c);
                                 break;
                         case SHORT:
                                 ((short *) db->data)[i] = (short) strtol(c, &next, 10);
+                                if (((short *) db->data)[i] == 0 && c == next)
+                                        fatal("Parsing short value at %d, %d \"%10s...\"",
+                                              lc, dim, c);
                                 break;
                         case INT:
                                 ((int *) db->data)[i] = (int) strtol(c, &next, 10);
+                                if (((int *) db->data)[i] == 0 && c == next)
+                                        fatal("Parsing int value at %d, %d \"%10s...\"",
+                                              lc, dim, c);
                                 break;
                         case FLOAT:
                                 ((float *) db->data)[i] = (float) strtod(c, &next);
+                                if (((float *) db->data)[i] == 0.0f && c == next)
+                                        fatal("Parsing float value at %d, %d \"%10s...\"",
+                                              lc, dim, c);
                                 break;
                         case DOUBLE:
                                 ((double *) db->data)[i] = strtod(c, &next);
+                                if (((double *) db->data)[i] == 0.0 && c == next)
+                                        fatal("Parsing double value at %d, %d \"%10s...\"",
+                                              lc, dim, c);
                                 break;
                         }
                         c = next;
