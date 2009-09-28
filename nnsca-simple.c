@@ -432,7 +432,7 @@ void nn_double_sca_B (int dimensions, int trcount, int trblockcount, double *trd
                         min_distance = distance[n];
                         cl = klass[n];
                         idx = -1;
-                        for (tn = 0;  tn < tbc;  tn++)
+                        for (tn = tbn;  tn < tbc;  tn++)
                         {
                                 ti = tn * dimensions;
                                 dist = 0.0;
