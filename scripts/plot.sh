@@ -15,35 +15,70 @@ do
         types='byte short int float double'
     fi
 
-    name=`basename $f`
-    table=$P/plots/table-$name.txt
+    title=`basename $f`
+    printf '=> %-16s  ...  ' $title
 
+    #
+    # Plot sizes
+    #
+    data=$P/plots/sizes-$title.txt
     for t in $types
     do
-        printf "$t"
+        input=$P/outputs/$title-simple-vec-b0-$t
+        if [ -f $input ]
+        then
+            values=`awk '/^ +Data array is/ { printf "  " $4 }' $input`
+        else
+            values='- -'
+        fi
+        echo "$t$values"
+    done >$data
+    gnuplot - $P/scripts/sizes.gpi >/dev/null 2>&1 <<EOP
+        plot_title  = "$title"
+        plot_output = "$P/plots/$title"
+        plot_data   = "$data"
+EOP
+    if [ $? -ne 0 ]
+    then
+        printf '!'
+    fi
+    printf 'sizes  '
+
+    #
+    # Plot times
+    #
+    data=$P/plots/times-$title.txt
+    for t in $types
+    do
+        line="$t"
         for bmegs in 0 4
         do
             for mode in sca vec
             do
                 for impl in simple unroll2 unroll4
                 do
-                    output=$P/outputs/$name-$impl-$mode-b$bmegs-$t
-                    if [ -f $output ]
+                    input=$P/outputs/$title-$impl-$mode-b$bmegs-$t
+                    if [ -f $input ]
                     then
-                        time=`awk '$2 == "Minimum" { print $4 }' $output`
+                        time=`awk '$2 == "Minimum" { print $4 }' $input`
                     else
                         time='-'
                     fi
-                    printf "  $time"
+                    line="$line  $time"
                 done
             done
         done
-        printf "\n"
-    done >$table
-
-    gnuplot - $P/scripts/histograms.gpi <<EOP
-        plot_title  = "$name"
-        plot_output = "$P/plots/$name"
-        plot_data   = "$table"
+        echo "$line"
+    done >$data
+    gnuplot - $P/scripts/times.gpi >/dev/null 2>&1 <<EOP
+        plot_title  = "$title"
+        plot_output = "$P/plots/$title"
+        plot_data   = "$data"
 EOP
+    if [ $? -ne 0 ]
+    then
+        printf '!'
+    fi
+    printf "times\n"
 done
+

@@ -1,0 +1,21 @@
+sans = "/usr/share/fonts/truetype/ttf-liberation/LiberationSans-Regular.ttf"
+set terminal png font sans 12 size 1000,500
+
+set style data histograms
+set style histogram clustered gap 2
+set style fill solid 0.2
+set boxwidth 0.8 relative
+set key vertical top rmargin Left reverse noautotitle
+
+set autoscale
+set yrange [0:]
+set xtics nomirror out rotate by -45
+set ytics mirror
+set ylabel "Size (MiBytes)"
+set grid y
+
+set title plot_title
+set output plot_output."-s.png"
+
+plot plot_data u ($2/(2**20)):xtic(1) t "Training data", '' u ($3/(2**20)) t "Test data"
+
