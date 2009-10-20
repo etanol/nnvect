@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <float.h>
 #include <stdint.h>
+#include <omp.h>
 
 
 /******************************************************************************/
@@ -27,6 +28,8 @@ void nn_byte_vec_U (int dimensions, int trcount, char *trdata, int *trklass,
         __m128i tmp1, tmp2, mask;
         __m128i dist;
 
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti, dist, d, vec, tvec, tmp1, mask, tmp2, sdist)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -75,6 +78,8 @@ void nn_short_vec_U (int dimensions, int trcount, short *trdata, int *trklass,
         __m128i tmp1, tmp2;
         __m128i dist;
 
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti, dist, d, vec, tvec, tmp1, tmp2, sdist)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -120,6 +125,8 @@ void nn_int_vec_U (int dimensions, int trcount, int *trdata, int *trklass,
         __m128i tmp1, tmp2;
         __m128i dist;
 
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti, dist, d, vec, tvec, tmp1, tmp2, sdist)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -167,6 +174,8 @@ void nn_float_vec_U (int dimensions, int trcount, float *trdata, int *trklass,
         __m128 tmp1, tmp2;
         __m128 dist;
 
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti, dist, d, vec, tvec, tmp1, tmp2, sdist)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -212,6 +221,8 @@ void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
         __m128d tmp1, tmp2;
         __m128d dist;
 
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti, dist, d, vec, tvec, tmp1, tmp2, sdist)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -270,6 +281,9 @@ void nn_byte_vec_B (int dimensions, int trcount, int trblockcount, char *trdata,
         {
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti, dist, d, vec, tvec, \
+                        tmp1, mask, tmp2, sdist)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -326,6 +340,9 @@ void nn_short_vec_B (int dimensions, int trcount, int trblockcount, short *trdat
         {
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti, dist, d, vec, tvec, \
+                        tmp1, tmp2, sdist)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -379,6 +396,9 @@ void nn_int_vec_B (int dimensions, int trcount, int trblockcount, int *trdata,
         {
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti, dist, d, vec, tvec, \
+                        tmp1, tmp2, sdist)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -434,6 +454,9 @@ void nn_float_vec_B (int dimensions, int trcount, int trblockcount, float *trdat
         {
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti, dist, d, vec, tvec, \
+                        tmp1, tmp2, sdist)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -487,6 +510,9 @@ void nn_double_vec_B (int dimensions, int trcount, int trblockcount, double *trd
         {
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti, dist, d, vec, tvec, \
+                        tmp1, tmp2, sdist)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;

@@ -1,6 +1,6 @@
 MAKEFLAGS += -R -r
-CFLAGS    ?= -O3 -fomit-frame-pointer -msse4.1
-LDFLAGS   += -lm
+CFLAGS    ?= -O3 -fopenmp -fomit-frame-pointer -msse4.1
+LDFLAGS   += -lm -fopenmp
 
 PROGRAMS := simple unroll2 unroll4
 

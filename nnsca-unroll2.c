@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <float.h>
 #include <math.h>
+#include <omp.h>
 
 /* Block adjustment */
 int adjusted_block_count (int bc)
@@ -32,6 +33,8 @@ void nn_byte_sca_U (int dimensions, int trcount, char *trdata, int *trklass,
         char datum, tmp1, tmp2;
 
         trcountU = trcount & ~0x01;
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti1, ti2, dist1, dist2, d, datum, tmp1, tmp2)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -96,6 +99,8 @@ void nn_short_sca_U (int dimensions, int trcount, short *trdata, int *trklass,
         short datum, tmp1, tmp2;
 
         trcountU = trcount & ~0x01;
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti1, ti2, dist1, dist2, d, datum, tmp1, tmp2)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -160,6 +165,8 @@ void nn_int_sca_U (int dimensions, int trcount, int *trdata, int *trklass,
         int datum, tmp1, tmp2;
 
         trcountU = trcount & ~0x01;
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti1, ti2, dist1, dist2, d, datum, tmp1, tmp2)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -226,6 +233,8 @@ void nn_float_sca_U (int dimensions, int trcount, float *trdata, int *trklass,
         float tmp1, tmp2;
 
         trcountU = trcount & ~0x01;
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti1, ti2, dist1, dist2, d, datum, tmp1, tmp2)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -290,6 +299,8 @@ void nn_double_sca_U (int dimensions, int trcount, double *trdata, int *trklass,
         double tmp1, tmp2;
 
         trcountU = trcount & ~0x01;
+        #pragma omp parallel for schedule(static) private(i, min_distance, cl, \
+                idx, tn, ti1, ti2, dist1, dist2, d, datum, tmp1, tmp2)
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -370,6 +381,9 @@ void nn_byte_sca_B (int dimensions, int trcount, int trblockcount, char *trdata,
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
                 tbcU = tbc & ~0x01;
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                        datum, tmp1, tmp2)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -442,6 +456,9 @@ void nn_short_sca_B (int dimensions, int trcount, int trblockcount, short *trdat
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
                 tbcU = tbc & ~0x01;
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                        datum, tmp1, tmp2)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -514,6 +531,9 @@ void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
                 tbcU = tbc & ~0x01;
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                        datum, tmp1, tmp2)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -588,6 +608,9 @@ void nn_float_sca_B (int dimensions, int trcount, int trblockcount, float *trdat
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
                 tbcU = tbc & ~0x01;
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                        datum, tmp1, tmp2)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
@@ -660,6 +683,9 @@ void nn_double_sca_B (int dimensions, int trcount, int trblockcount, double *trd
                 tbc = (tbn + trblockcount < trcount ?
                        tbn + trblockcount : trcount);
                 tbcU = tbc & ~0x01;
+                #pragma omp parallel for schedule(static) private(i, \
+                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                        datum, tmp1, tmp2)
                 for (n = 0;  n < count;  n++)
                 {
                         i = n * dimensions;
