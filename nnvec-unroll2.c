@@ -30,7 +30,6 @@ void nn_byte_vec_U (int dimensions, int trcount, char *trdata, int *trklass,
         __m128i dist1, dist2;
 
         trcountU = trcount & ~0x01;
-        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -104,7 +103,6 @@ void nn_byte_vec_U (int dimensions, int trcount, char *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
@@ -124,7 +122,6 @@ void nn_short_vec_U (int dimensions, int trcount, short *trdata, int *trklass,
         __m128i dist1, dist2;
 
         trcountU = trcount & ~0x01;
-        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -189,7 +186,6 @@ void nn_short_vec_U (int dimensions, int trcount, short *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
@@ -209,7 +205,6 @@ void nn_int_vec_U (int dimensions, int trcount, int *trdata, int *trklass,
         __m128i dist1, dist2;
 
         trcountU = trcount & ~0x01;
-        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -274,7 +269,6 @@ void nn_int_vec_U (int dimensions, int trcount, int *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%u\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
@@ -296,7 +290,6 @@ void nn_float_vec_U (int dimensions, int trcount, float *trdata, int *trklass,
         __m128 dist1, dist2;
 
         trcountU = trcount & ~0x01;
-        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -361,7 +354,6 @@ void nn_float_vec_U (int dimensions, int trcount, float *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%f\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
@@ -381,7 +373,6 @@ void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
         __m128d dist1, dist2;
 
         trcountU = trcount & ~0x01;
-        debug("Class\tDist\tIndex ");
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
@@ -440,7 +431,6 @@ void nn_double_vec_U (int dimensions, int trcount, double *trdata, int *trklass,
                                 idx = tn;
                         }
                 }
-                debug("%d\t%lf\t%d ", cl, min_distance, idx);
                 klass[n] = cl;
         }
 }
@@ -472,7 +462,6 @@ void nn_byte_vec_B (int dimensions, int trcount, int trblockcount, char *trdata,
         __m128i mask1, mask2;
         __m128i dist1, dist2;
 
-        debug("Class\tDist\tIndex ");
         for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
         {
                 tbc = (tbn + trblockcount < trcount ?
@@ -551,7 +540,6 @@ void nn_byte_vec_B (int dimensions, int trcount, int trblockcount, char *trdata,
                                         idx = tn;
                                 }
                         }
-                        debug("%d\t%u\t%d ", cl, min_distance, idx);
                         distance[n] = min_distance;
                         klass[n] = cl;
                 }
@@ -575,7 +563,6 @@ void nn_short_vec_B (int dimensions, int trcount, int trblockcount, short *trdat
         __m128i tmp1, tmp2;
         __m128i dist1, dist2;
 
-        debug("Class\tDist\tIndex ");
         for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
         {
                 tbc = (tbn + trblockcount < trcount ?
@@ -645,7 +632,6 @@ void nn_short_vec_B (int dimensions, int trcount, int trblockcount, short *trdat
                                         idx = tn;
                                 }
                         }
-                        debug("%d\t%u\t%d ", cl, min_distance, idx);
                         distance[n] = min_distance;
                         klass[n] = cl;
                 }
@@ -668,7 +654,6 @@ void nn_int_vec_B (int dimensions, int trcount, int trblockcount, int *trdata,
         __m128i tmp1, tmp2;
         __m128i dist1, dist2;
 
-        debug("Class\tDist\tIndex ");
         for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
         {
                 tbc = (tbn + trblockcount < trcount ?
@@ -738,7 +723,6 @@ void nn_int_vec_B (int dimensions, int trcount, int trblockcount, int *trdata,
                                         idx = tn;
                                 }
                         }
-                        debug("%d\t%u\t%d ", cl, min_distance, idx);
                         distance[n] = min_distance;
                         klass[n] = cl;
                 }
@@ -763,7 +747,6 @@ void nn_float_vec_B (int dimensions, int trcount, int trblockcount, float *trdat
         __m128 tmp1, tmp2;
         __m128 dist1, dist2;
 
-        debug("Class\tDist\tIndex ");
         for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
         {
                 tbc = (tbn + trblockcount < trcount ?
@@ -833,7 +816,6 @@ void nn_float_vec_B (int dimensions, int trcount, int trblockcount, float *trdat
                                         idx = tn;
                                 }
                         }
-                        debug("%d\t%f\t%d ", cl, min_distance, idx);
                         distance[n] = min_distance;
                         klass[n] = cl;
                 }
@@ -856,7 +838,6 @@ void nn_double_vec_B (int dimensions, int trcount, int trblockcount, double *trd
         __m128d tmp1, tmp2;
         __m128d dist1, dist2;
 
-        debug("Class\tDist\tIndex ");
         for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
         {
                 tbc = (tbn + trblockcount < trcount ?
@@ -920,7 +901,6 @@ void nn_double_vec_B (int dimensions, int trcount, int trblockcount, double *trd
                                         idx = tn;
                                 }
                         }
-                        debug("%d\t%lf\t%d ", cl, min_distance, idx);
                         distance[n] = min_distance;
                         klass[n] = cl;
                 }

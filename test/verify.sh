@@ -2,6 +2,7 @@
 
 RFILE=res
 FPREFIX=fail
+FAILED=''
 
 #
 # Verification function.  Arguments are:
@@ -19,15 +20,11 @@ check()
         echo "NOT COMPLETED"
     elif cmp -s result-$2 $RFILE
     then
-        echo "OK"
+        printf '.'
     else
-        dumpfile=$FPREFIX-$2-$1-$3.$4
-        case $4 in
-            scalar) scalar=--scalar ;;
-            vector) scalar=         ;;
-        esac
-        ../debug/$1 --runs=1 ${5+--blocksize=}$5 --type=$3 $scalar $2 2>&1 | awk -f ../debug/filter.awk >$dumpfile
-        echo "FAILED --> $dumpfile"
+        dumpfile=$FPREFIX-$2-$1-$3.$4 mv $RFILE $dumpfile
+        FAILED="$FAILED $dumpfile"
+        printf '!'
     fi
 }
 
@@ -41,77 +38,31 @@ check()
 #
 run_test()
 {
-    echo "Testing '$1' with '$2'"
-    echo
-    printf "  Unblocked version  "
     for t in "byte  "  "short "  "int   "  "float "  "double"
     do
-        printf "$t "
-        printf "scalar  "
         ../$1 --output=$RFILE --type=$t --scalar $2 >/dev/null 2>&1
         check $1 $2 $t scalar
-        printf "                            vector  "
         ../$1 --output=$RFILE --type=$t $2 >/dev/null 2>&1
         check $1 $2 $t vector
-        printf "                     "
     done
-    echo
     if [ -n "$3" ]
     then
-        printf "  Blocking  version  "
         for t in "byte  "  "short "  "int   "  "float "  "double"
         do
-            printf "$t "
-            printf "scalar  "
             ../$1 --output=$RFILE --blocksize=$3 --type=$t --scalar $2 >/dev/null 2>&1
             check $1 $2 $t scalar $3
-            printf "                            vector  "
             ../$1 --output=$RFILE --blocksize=$3 --type=$t $2 >/dev/null 2>&1
             check $1 $2 $t vector $3
-            printf "                     "
         done
-        echo
     fi
-    echo
 }
-
-
-#
-# Test function for blocking versions.  Arguments are:
-#
-#     $1 --> binary to execute
-#     $2 --> test data to load and use
-#     $3 --> Size of the block
-#
-run_test_B()
-{
-    echo "Testing '$1' with '$2'"
-    echo
-    printf "  Blocking  version  "
-    for t in "byte  "  "short "  "int   "  "float "  "double"
-    do
-        printf "$t "
-        printf "scalar  "
-        ../$1 --output=$RFILE --blocksize=$3 --type=$t --scalar $2 >/dev/null 2>&1
-        check $1 $2 $t scalar
-        printf "                            vector  "
-        ../$1 --output=$RFILE --blocksize=$3 --type=$t $2 >/dev/null 2>&1
-        check $1 $2 $t vector
-        printf "                     "
-    done
-    echo
-    echo
-}
-
 
 
 rm -f $FPREFIX-*
 
 echo "====  BUILDING  ===="
 make -C ..
-make -C ../debug
 
-echo
 echo
 echo
 echo "====  TESTING  ===="
@@ -121,5 +72,17 @@ run_test unroll2 basic
 run_test unroll2 large 1000
 run_test unroll4 basic
 run_test unroll4 large 1000
+echo
+
+if [ -n "$FAILED" ]
+then
+    echo 'The following test failed:'
+    for t in $FAILED
+    do
+        echo "    $t"
+    done
+else
+    echo 'All tests passed'
+fi
 
 rm -f $RFILE
