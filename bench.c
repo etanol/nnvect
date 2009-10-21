@@ -69,9 +69,19 @@ static void strtolower (char *s)
 }
 
 
+static inline double mops (struct db *train, struct db *test, double secs)
+{
+        debug("Dividing %lf / %lf",
+              3.0 * test->dimensions * test->count * train->count,
+              secs * 1.0e6);
+        return (3.0 * test->dimensions * test->count * train->count) /
+               (secs * 1.0e6);
+}
+
+
 int main (int argc, char **argv)
 {
-        char *progname, *fullname, *dumpfile, *typelabel;
+        char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
         int cmdopt, has_opts, want_scalar, r, runs;
         int block_limit;
         enum valuetype type;
@@ -84,6 +94,7 @@ int main (int argc, char **argv)
         runs = 3;
         type = FLOAT;
         typelabel = NULL;
+        mops_label = "MFLOPS";
         want_scalar = 0;
         has_opts = 1;
 
@@ -145,6 +156,10 @@ int main (int argc, char **argv)
                         if (typelabel != NULL)
                                 free(typelabel);
                         typelabel = xstrcat(optarg, NULL);
+                        if (type == FLOAT || type == DOUBLE)
+                                mops_label = "MFLOPS";
+                        else
+                                mops_label = "MOPS";
                         break;
                 case '?':
                         fputs("\n", stderr);
@@ -191,12 +206,16 @@ int main (int argc, char **argv)
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
         {
+                double t;
+
                 printf("Run %d of %d ... ", r + 1, runs);
                 fflush(stdout);
                 start_run(ts);
                 nn(type, want_scalar, train_db, db);
                 stop_run(ts);
-                printf("%lf s\n", get_last_run_time(ts));
+                t = get_last_run_time(ts);
+                printf("%lf s  (%.03lf %s)\n", t, mops(train_db, db, t),
+                       mops_label);
         }
 
         if (dumpfile == NULL)
@@ -205,9 +224,12 @@ int main (int argc, char **argv)
 
                 calculate_stats(ts, &sts);
                 printf("\nStatistics\n\n");
-                printf("- Minimum time: %lf s\n", sts.minimum);
-                printf("- Maximum time: %lf s\n", sts.maximum);
-                printf("- Average time: %lf s\n", sts.mean);
+                printf("- Minimum time: %lf s  (%.03lf %s)\n", sts.minimum,
+                       mops(train_db, db, sts.minimum), mops_label);
+                printf("- Maximum time: %lf s  (%.03lf %s)\n", sts.maximum,
+                       mops(train_db, db, sts.maximum), mops_label);
+                printf("- Average time: %lf s  (%.03lf %s)\n", sts.mean,
+                       mops(train_db, db, sts.mean), mops_label);
                 printf("- Standard deviation: %lf s\n\n", sts.deviation);
         }
         else
