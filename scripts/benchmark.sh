@@ -2,6 +2,7 @@
 
 P=`dirname $0`/..
 test -d $P/outputs || mkdir $P/outputs
+export OMP_NUM_THREADS
 
 files=`ls $P/sample_nn_data/*.tst | sed 's/\.tst$//'`
 
@@ -24,10 +25,14 @@ do
             do
                 for bmegs in 0 4
                 do
-                    output=$P/outputs/`basename $f`-$impl-$mode-b$bmegs-$t
-                    test -f $output && continue
                     bs=`expr $bmegs '*' 1024 '*' 1024`
-                    $P/$impl --runs=5 --type=$t $sf --blocksize=$bs $f | tee $output
+                    for nt in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16
+                    do
+                        output=$P/outputs/`basename $f`-$impl-$mode-b$bmegs-$t-$nt
+                        test -f $output && continue
+                        OMP_NUM_THREADS=$nt
+                        $P/$impl --runs=5 --type=$t $sf --blocksize=$bs $f | tee $output
+                    done
                 done
             done
             sf=
