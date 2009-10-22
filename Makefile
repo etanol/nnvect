@@ -22,6 +22,8 @@ endef
 
 $(foreach p,$(PROGRAMS),$(eval $(call gen_rules,$(p))))
 
+machine.h: scripts/get_machine_info.sh
+	@echo " Obtaining CPU info" && ./scripts/get_machine_info.sh >$@
 
 .SUFFIXES: .c .o
 %.o: %.c
