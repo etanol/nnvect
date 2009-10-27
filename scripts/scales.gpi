@@ -1,0 +1,63 @@
+sans = "/usr/share/fonts/truetype/ttf-liberation/LiberationSans-Regular.ttf"
+set terminal png font sans 12 size 1000,500
+
+set style function lines
+set style data lines
+set key vertical top rmargin Left reverse noautotitle
+
+set yrange [1:8]
+set xrange [1:8]
+set xtics nomirror in
+set ytics mirror
+set ylabel "Speed-up"
+set xlabel "Threads"
+set grid x y
+
+set title plot_title." Unblocked Scalar"
+set output plot_output."-us.png"
+
+plot x t "Ideal", plot_data."-0.txt" u 1:31 t "Byte simple", \
+     '' u 1:30 t "Byte unroll2", '' u 1:29 t "Byte unrol4", \
+     '' u 1:25 t "Short simple", '' u 1:24 t "Short unroll2", \
+     '' u 1:23 t "Short unroll4", '' u 1:19 t "Int simple", \
+     '' u 1:18 t "Int unroll2", '' u 1:17 t "Int unroll4", \
+     '' u 1:13 t "Float simple", '' u 1:12 t "Float unroll2", \
+     '' u 1:11 t "Float unroll4", '' u 1:7 t "Double simple", \
+     '' u 1:6 t "Double unroll2", '' u 1:5 t "Double unroll4"
+
+set title plot_title." Unblocked Vectorized"
+set output plot_output."-uv.png"
+
+plot x t "Ideal", plot_data."-0.txt" u 1:28 t "Byte simple", \
+     '' u 1:27 t "Byte unroll2", '' u 1:26 t "Byte unrol4", \
+     '' u 1:22 t "Short simple", '' u 1:21 t "Short unroll2", \
+     '' u 1:20 t "Short unroll4", '' u 1:16 t "Int simple", \
+     '' u 1:15 t "Int unroll2", '' u 1:14 t "Int unroll4", \
+     '' u 1:10 t "Float simple", '' u 1:9 t "Float unroll2", \
+     '' u 1:8 t "Float unroll4", '' u 1:4 t "Double simple", \
+     '' u 1:3 t "Double unroll2", '' u 1:2 t "Double unroll4"
+
+set title plot_title." Blocked Scalar"
+set output plot_output."-bs.png"
+
+plot x t "Ideal", plot_data."-4.txt" u 1:31 t "Byte simple", \
+     '' u 1:30 t "Byte unroll2", '' u 1:29 t "Byte unrol4", \
+     '' u 1:25 t "Short simple", '' u 1:24 t "Short unroll2", \
+     '' u 1:23 t "Short unroll4", '' u 1:19 t "Int simple", \
+     '' u 1:18 t "Int unroll2", '' u 1:17 t "Int unroll4", \
+     '' u 1:13 t "Float simple", '' u 1:12 t "Float unroll2", \
+     '' u 1:11 t "Float unroll4", '' u 1:7 t "Double simple", \
+     '' u 1:6 t "Double unroll2", '' u 1:5 t "Double unroll4"
+
+set title plot_title." Blocked Vectorized"
+set output plot_output."-bv.png"
+
+plot x t "Ideal", plot_data."-4.txt" u 1:28 t "Byte simple", \
+     '' u 1:27 t "Byte unroll2", '' u 1:26 t "Byte unrol4", \
+     '' u 1:22 t "Short simple", '' u 1:21 t "Short unroll2", \
+     '' u 1:20 t "Short unroll4", '' u 1:16 t "Int simple", \
+     '' u 1:15 t "Int unroll2", '' u 1:14 t "Int unroll4", \
+     '' u 1:10 t "Float simple", '' u 1:9 t "Float unroll2", \
+     '' u 1:8 t "Float unroll4", '' u 1:4 t "Double simple", \
+     '' u 1:3 t "Double unroll2", '' u 1:2 t "Double unroll4"
+

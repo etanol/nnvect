@@ -15,7 +15,7 @@ set ylabel "Size (MiBytes)"
 set grid y
 
 set title plot_title
-set output plot_output."-s.png"
+set output plot_output.".png"
 
 plot plot_data u ($2/(2**20)):xtic(1) t "Training data", '' u ($3/(2**20)) t "Test data"
 
