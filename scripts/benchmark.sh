@@ -30,6 +30,7 @@ do
                     do
                         output=$P/outputs/`basename $f`-$impl-$mode-b$bmegs-$t-$nt
                         test -f $output && continue
+                        echo "--> $output"
                         OMP_NUM_THREADS=$nt
                         $P/$impl --runs=5 --type=$t $sf --blocksize=$bs $f | tee $output
                     done
