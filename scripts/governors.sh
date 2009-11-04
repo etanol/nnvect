@@ -9,6 +9,13 @@ then
         echo Using governor $1
     else
         echo Governor $1 does not exist
+        echo
+        echo Available governors are:
+        echo
+        for gov in `cat $sys/cpu0/cpufreq/scaling_available_governors`
+        do
+            echo "    $gov"
+        done
         exit 2
     fi
 
