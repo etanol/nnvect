@@ -7,6 +7,7 @@ struct db
 {
         enum valuetype type;
         int count;
+        int wanted_block_size;
         int block_items;
         int dimensions;
         int real_dimensions;

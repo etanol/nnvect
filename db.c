@@ -211,6 +211,7 @@ struct db *load_db (const char *filename, enum valuetype type,
         memset(db->klass, 0, db->count * sizeof(int));
         memset(db->data, 0, db->count * rowsize);
 
+        db->wanted_block_size = max_block_size;
         if (max_block_size > 0 && db->count * rowsize > max_block_size)
                 db->block_items = max_block_size / rowsize;
         else
@@ -232,7 +233,7 @@ struct db *load_db (const char *filename, enum valuetype type,
 void print_db_info (struct db *db)
 {
         int padcolumns;
-        unsigned int typesize, datasize, padsize, blocksize;
+        unsigned int typesize, datasize, padsize, rowsize, blocksize;
 
         typesize = 0;
         switch (db->type)
@@ -245,9 +246,10 @@ void print_db_info (struct db *db)
         }
 
         padcolumns = db->dimensions - db->real_dimensions;
+        rowsize = db->dimensions * typesize;
         padsize = db->count * padcolumns * typesize;
-        datasize = db->count * db->dimensions * typesize;
-        blocksize = db->block_items * db->dimensions * typesize;
+        datasize = db->count * rowsize;
+        blocksize = db->block_items * rowsize;
 
         printf("    There are %d elements\n", db->count);
         printf("    There are %d dimensions, of which %d are padding\n",
@@ -258,11 +260,23 @@ void print_db_info (struct db *db)
                datasize, padsize, (padsize * 100.0f) / datasize);
         printf("    Data array would be %u bytes without padding\n",
                db->count * db->real_dimensions * typesize);
-        if (db->block_items > 0)
-                printf("    Each block has %d elements (%u bytes)\n",
-                       db->block_items, blocksize);
+        /* Detailed blocking diagnostics */
+        if (db->wanted_block_size > 0)
+        {
+                if (db->block_items > 0)
+                        printf("    Each block has %d elements (%u bytes)\n",
+                               db->block_items, blocksize);
+                else
+                {
+                        if (rowsize > db->wanted_block_size)
+                                printf("    Block size is too small (should be"
+                                       "at least %d)\n", rowsize);
+                        else
+                                printf("    Data fits in a single block\n");
+                }
+        }
         else
-                printf("    Blocking not requested, unneeded, or too small block size\n");
+                printf("    Blocking not requested\n");
 }
 
 

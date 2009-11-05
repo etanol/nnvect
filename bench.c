@@ -31,7 +31,7 @@ static void usage (const char *progname)
 "Where possible options are:\n\n"
 "    -b, --blocksize=SIZE  The maximum amount of bytes to read from the\n"
 "                          training array at once.  Setting this value to\n"
-"                          zero (the default) selects a non-blocking\n"
+"                          zero (the default) forces a non-blocking\n"
 "                          implementation.\n\n"
 "    -h, --help            This help.\n\n"
 "    -o, --output=FILE     Save the calculated results to FILE in order to\n"
