@@ -17,35 +17,26 @@ set grid y
 set title plot_title." (I)"
 set output plot_output."-1.png"
 
-plot newhistogram "Unblocked", \
-         plot_data u 2:xtic(1) t "Scalar simple", '' u 3 t "Scalar unroll 2", \
+plot plot_data u 2:xtic(1) t "Scalar simple", '' u 3 t "Scalar unroll 2", \
          '' u 4 t "Scalar unroll 4", '' u 5 t "Vectorized simple", \
-         '' u 6 t "Vectorized unroll 2", '' u 7 t "Vectorized unroll 4", \
-     newhistogram "Blocked", \
-         plot_data u 8:xtic(1) lt 1, '' u 9 lt 2, '' u 10 lt 3, '' u 11 lt 4, \
-         '' u 12 lt 5, '' u 13 lt 6
+         '' u 6 t "Vectorized unroll 2", '' u 7 t "Vectorized unroll 4"
 
 set title plot_title." (II)"
 set output plot_output."-2.png"
 
 plot newhistogram "Simple", \
-         plot_data u 2:xtic(1) t "Scalar unblocked", '' u 8 t "Scalar blocked", \
-         '' u 5 t "Vectorized unblocked", '' u 11 t "Vectorized blocked", \
+         plot_data u 2:xtic(1) t "Scalar", '' u 5 t "Vectorized", \
      newhistogram "Unroll 2", \
-         plot_data u 3:xtic(1) lt 1, '' u 9 lt 2, '' u 6 lt 3, '' u 12 lt 4, \
+         plot_data u 3:xtic(1) lt 1, '' u 6 lt 2, \
      newhistogram "Unroll 4", \
-         plot_data u 4:xtic(1) lt 1, '' u 10 lt 2, '' u 7 lt 3, '' u 13 lt 4
-
+         plot_data u 4:xtic(1) lt 1, '' u 7 lt 2
 
 set title plot_title." (III)"
 set output plot_output."-3.png"
 
 plot newhistogram "Scalar", \
-         plot_data u 2:xtic(1) t "Unblocked simple", '' u 3 t "Unblocked unroll 2", \
-         '' u 4 t "Unblocked unroll 4", '' u 8 t "Blocked simple", \
-         '' u 9 t "Blocked unroll 2", '' u 10 t "Blocked unroll 4", \
+         plot_data u 2:xtic(1) t "Simple", '' u 3 t "Unroll 2", \
+         '' u 4 t "Unroll 4", \
      newhistogram "Vectorized", \
-         plot_data u 5:xtic(1) lt 1, '' u 6 lt 2, '' u 7 lt 3, '' u 11 lt 4, \
-         '' u 12 lt 5, '' u 13 lt 6
-
+         plot_data u 5:xtic(1) lt 1, '' u 6 lt 2, '' u 7 lt 3
 

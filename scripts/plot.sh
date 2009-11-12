@@ -32,7 +32,7 @@ do
     data=$P/plots/sizes/table-$title.txt
     for t in $types
     do
-        input=$P/outputs/$title-simple-vec-b0-$t-1
+        input=$P/outputs/$title-simple-vec-$t-1
         if [ -f $input ]
         then
             values=`awk '/^ +Data array is/ { printf "  " $4 }' $input`
@@ -59,21 +59,18 @@ EOP
     for t in $types
     do
         line="$t"
-        for bmegs in 0 4
+        for mode in sca vec
         do
-            for mode in sca vec
+            for impl in simple unroll2 unroll4
             do
-                for impl in simple unroll2 unroll4
-                do
-                    input=$P/outputs/$title-$impl-$mode-b$bmegs-$t-1
-                    if [ -f $input ]
-                    then
-                        time=`awk '$2 == "Minimum" { print $4 }' $input`
-                    else
-                        time='-'
-                    fi
-                    line="$line  $time"
-                done
+                input=$P/outputs/$title-$impl-$mode-$t-1
+                if [ -f $input ]
+                then
+                    time=`awk '$2 == "Minimum" { print $4 }' $input`
+                else
+                    time='-'
+                fi
+                line="$line  $time"
             done
         done
         echo "$line"
@@ -95,22 +92,19 @@ EOP
     data=$P/plots/mflops/table-$title.txt
     for t in $types
     do
-        line="$t"
-        for bmegs in 0 4
+    line="$t"
+        for mode in sca vec
         do
-            for mode in sca vec
+            for impl in simple unroll2 unroll4
             do
-                for impl in simple unroll2 unroll4
-                do
-                    input=$P/outputs/$title-$impl-$mode-b$bmegs-$t-1
-                    if [ -f $input ]
-                    then
-                        mflops=`awk '$2 == "Minimum" { print substr($6, 2) }' $input`
-                    else
-                        mflops='-'
-                    fi
-                    line="$line  $mflops"
-                done
+                input=$P/outputs/$title-$impl-$mode-$t-1
+                if [ -f $input ]
+                then
+                    mflops=`awk '$2 == "Minimum" { print substr($6, 2) }' $input`
+                else
+                    mflops='-'
+                fi
+                line="$line  $mflops"
             done
         done
         echo "$line"
@@ -129,50 +123,47 @@ EOP
     #
     # Plot scalability
     #
-    data=$P/plots/scales/table-$title
-    for bmegs in 0 4
+    data=$P/plots/scales/table-$title.txt
+    for threads in 1 2 3 4 5 6 7 8
     do
-        for threads in 1 2 3 4 5 6 7 8
+        line=''
+        for t in $types
         do
-            line=''
-            for t in $types
+            for mode in sca vec
             do
-                for mode in sca vec
+                for impl in simple unroll2 unroll4
                 do
-                    for impl in simple unroll2 unroll4
-                    do
-                        input=$P/outputs/$title-$impl-$mode-b$bmegs-$t-$threads
-                        if [ -f $input ]
-                        then
-                            time=`awk '$2 == "Minimum" { print $4 }' $input`
-                        else
-                            time='-'
-                        fi
-                        line="$time  $line"
-                    done
+                    input=$P/outputs/$title-$impl-$mode-$t-$threads
+                    if [ -f $input ]
+                    then
+                        time=`awk '$2 == "Minimum" { print $4 }' $input`
+                    else
+                        time='-'
+                    fi
+                    line="$time  $line"
                 done
             done
-            echo "$threads  $line"
-        done | awk '$1 == 1 {
-                        printf "1"
-                        for (i = 2;  i <= NF;  i++)
-                        {
-                            printf "  1"
-                            base[i] = $i
-                        }
-                        printf "\n"
-                        next
-                    }
+        done
+        echo "$threads  $line"
+    done | awk '$1 == 1 {
+                    printf "1"
+                    for (i = 2;  i <= NF;  i++)
                     {
-                        printf "%d", $1
-                        for (i = 2;  i <= NF;  i++)
-                            if (base[i] == "-" || $i == "-")
-                                printf "  -"
-                            else
-                                printf "  %f", base[i] / $i
-                        printf "\n"
-                    }' >$data-$bmegs.txt
-    done
+                        printf "  1"
+                        base[i] = $i
+                    }
+                    printf "\n"
+                    next
+                }
+                {
+                    printf "%d", $1
+                    for (i = 2;  i <= NF;  i++)
+                        if (base[i] == "-" || $i == "-")
+                            printf "  -"
+                        else
+                            printf "  %f", base[i] / $i
+                    printf "\n"
+                }' >$data.txt
     gnuplot - $P/scripts/scales.gpi >/dev/null 2>&1 <<EOP
         plot_title  = "$title"
         plot_output = "$P/plots/scales/$title"
