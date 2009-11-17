@@ -1,0 +1,68 @@
+Index: libsvm-2.9/svm-train.c
+===================================================================
+--- libsvm-2.9.orig/svm-train.c	2009-11-17 11:20:19.000000000 +0100
++++ libsvm-2.9/svm-train.c	2009-11-17 11:21:02.000000000 +0100
+@@ -1,3 +1,4 @@
++#include <sys/time.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -85,6 +86,8 @@
+ 	char input_file_name[1024];
+ 	char model_file_name[1024];
+ 	const char *error_msg;
++	struct timeval start, stop;
++        double time;
+ 
+ 	parse_command_line(argc, argv, input_file_name, model_file_name);
+ 	read_problem(input_file_name);
+@@ -102,9 +105,14 @@
+ 	}
+ 	else
+ 	{
++		gettimeofday(&start, NULL);
+ 		model = svm_train(&prob,&param);
++		gettimeofday(&stop, NULL);
+ 		svm_save_model(model_file_name,model);
+ 		svm_destroy_model(model);
++		time = (double) (stop.tv_sec - start.tv_sec) +
++		       (double) (stop.tv_usec - start.tv_usec) * 1.0e-6;
++		printf("TRAINING TIME: %lf seconds\n", time);
+ 	}
+ 	svm_destroy_param(&param);
+ 	free(prob.y);
+Index: libsvm-2.9/svm-predict.c
+===================================================================
+--- libsvm-2.9.orig/svm-predict.c	2009-11-17 11:20:19.000000000 +0100
++++ libsvm-2.9/svm-predict.c	2009-11-17 11:21:02.000000000 +0100
+@@ -1,3 +1,4 @@
++#include <sys/time.h>
+ #include <stdio.h>
+ #include <ctype.h>
+ #include <stdlib.h>
+@@ -162,6 +163,8 @@
+ int main(int argc, char **argv)
+ {
+ 	FILE *input, *output;
++	struct timeval start, stop;
++	double time;
+ 	int i;
+ 
+ 	// parse options
+@@ -216,11 +219,16 @@
+ 		if(svm_check_probability_model(model)!=0)
+ 			printf("Model supports probability estimates, but disabled in prediction.\n");
+ 	}
++	gettimeofday(&start, NULL);
+ 	predict(input,output);
++	gettimeofday(&stop, NULL);
+ 	svm_destroy_model(model);
+ 	free(x);
+ 	free(line);
+ 	fclose(input);
+ 	fclose(output);
++	time = (double) (stop.tv_sec - start.tv_sec) +
++	       (double) (stop.tv_usec - start.tv_usec) * 1.0e-6;
++	printf("PREDICT TIME: %lf seconds\n", time);
+ 	return 0;
+ }
