@@ -5,6 +5,7 @@ test -d $P/svm-outputs || mkdir $P/svm-outputs
 
 svm_train="$P/libsvm-2.9/svm-train"
 svm_predict="$P/libsvm-2.9/svm-predict"
+ram_dir='/dev/shm'
 
 files=`ls $P/sample_svm_data/*.tst | sed 's/\.tst$//'`
 
@@ -16,19 +17,22 @@ do
     c=$1
     g=$2
 
-    output=$P/svm-outputs/`basename $f`
+    bf=`basename $f`
+    rf=$ram_dir/$bf
+    output=$P/svm-outputs/$bf
     test -f $output && continue
 
-    echo "--> $f training warm-up"
-    $svm_train -c $c -g $g $f.trn $f.model >/dev/null 2>&1
-    echo "--> $f training real"
-    echo '=== TRAINING ===' > $output
-    $svm_train -c $c -g $g $f.trn $f.model 2>/dev/null >> $output
+    cp $f.trn $rf.trn
+    cp $f.tst $rf.tst
 
-    echo "--> $f prediction warm-up"
-    $svm_predict $f.tst $f.model /dev/null >/dev/null 2>&1
-    echo "--> $f prediction real"
+    echo "--> $bf training"
+    echo '=== TRAINING ===' > $output
+    $svm_train -c $c -g $g $rf.trn $rf.model 2>/dev/null >> $output
+
+    echo "--> $bf prediction"
     echo '=== PREDICTION ===' >> $output
-    $svm_predict $f.tst $f.model /dev/null 2>/dev/null >> $output
+    $svm_predict $rf.tst $rf.model /dev/null 2>/dev/null >> $output
+
+    rm -f $rf.*
 done
 
