@@ -1,0 +1,75 @@
+Index: liblinear-1.5/predict.c
+===================================================================
+--- liblinear-1.5.orig/predict.c	2009-11-24 11:34:11.000000000 +0100
++++ liblinear-1.5/predict.c	2009-11-24 11:49:09.000000000 +0100
+@@ -3,6 +3,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <errno.h>
++#include <sys/time.h>
+ #include "linear.h"
+ 
+ struct feature_node *x;
+@@ -162,6 +163,8 @@
+ {
+ 	FILE *input, *output;
+ 	int i;
++	struct timeval start, stop;
++	double time;
+ 
+ 	// parse options
+ 	for(i=1;i<argc;i++)
+@@ -204,12 +207,17 @@
+ 	}
+ 
+ 	x = (struct feature_node *) malloc(max_nr_attr*sizeof(struct feature_node));
++	gettimeofday(&start, NULL);
+ 	do_predict(input, output, model_);
++	gettimeofday(&stop, NULL);
+ 	destroy_model(model_);
+ 	free(line);
+ 	free(x);
+ 	fclose(input);
+ 	fclose(output);
++	time = (double) (stop.tv_sec - start.tv_sec) +
++	       (double) (stop.tv_usec - start.tv_usec) * 1.0e-6;
++	printf("PREDICT TIME: %lf seconds\n", time);
+ 	return 0;
+ }
+ 
+Index: liblinear-1.5/train.c
+===================================================================
+--- liblinear-1.5.orig/train.c	2009-11-24 11:34:11.000000000 +0100
++++ liblinear-1.5/train.c	2009-11-24 11:48:57.000000000 +0100
+@@ -4,6 +4,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include <errno.h>
++#include <sys/time.h>
+ #include "linear.h"
+ #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
+ #define INF HUGE_VAL
+@@ -86,6 +87,8 @@
+ 	char input_file_name[1024];
+ 	char model_file_name[1024];
+ 	const char *error_msg;
++	struct timeval start, stop;
++	double time;
+ 
+ 	parse_command_line(argc, argv, input_file_name, model_file_name);
+ 	read_problem(input_file_name);
+@@ -103,9 +106,14 @@
+ 	}
+ 	else
+ 	{
++		gettimeofday(&start, NULL);
+ 		model_=train(&prob, &param);
++		gettimeofday(&stop, NULL);
+ 		save_model(model_file_name, model_);
+ 		destroy_model(model_);
++		time = (double) (stop.tv_sec - start.tv_sec) +
++		       (double) (stop.tv_usec - start.tv_usec) * 1.0e-6;
++		printf("TRAINING TIME: %lf seconds\n", time);
+ 	}
+ 	destroy_param(&param);
+ 	free(prob.y);
