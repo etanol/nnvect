@@ -82,8 +82,9 @@ static inline double mops (struct db *train, struct db *test, double secs)
 int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
-        int cmdopt, has_opts, want_scalar, r, runs;
+        int cmdopt, has_opts, want_scalar, r, runs, i, hits;
         int block_limit;
+        int *original;
         enum valuetype type;
         struct db *db, *train_db;
         struct timestats *ts;
@@ -195,13 +196,17 @@ int main (int argc, char **argv)
                (typelabel == NULL ? "float" : typelabel));
         db = load_db(fullname, type, 0, !want_scalar, train_db->block_items > 0);
         free(fullname);
-        memset(db->klass, 0, db->count * sizeof(int));
         print_db_info(db);
         printf("\n");
 
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
                       train_db->dimensions);
+
+        /* Save original results for accuracy testing */
+        original = xmalloc(sizeof(int) * db->count);
+        memcpy(original, db->klass, sizeof(int) * db->count);
+        memset(db->klass, 0, sizeof(int) * db->count);
 
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
@@ -218,12 +223,21 @@ int main (int argc, char **argv)
                        mops_label);
         }
 
+        /* Measure accuracy */
+        hits = 0;
+        for (i = 0;  i < db->count;  i++)
+                if (db->klass[i] == original[i])
+                        hits++;
+        free(original);
+        printf("\nClassification accuracy: %.2lf %%\n\n",
+               (100.0 * hits) / db->count);
+
         if (dumpfile == NULL)
         {
                 struct stats sts;
 
                 calculate_stats(ts, &sts);
-                printf("\nStatistics\n\n");
+                printf("Timing statistics\n\n");
                 printf("- Minimum time: %lf s  (%.03lf %s)\n", sts.minimum,
                        mops(train_db, db, sts.minimum), mops_label);
                 printf("- Maximum time: %lf s  (%.03lf %s)\n", sts.maximum,
@@ -234,7 +248,6 @@ int main (int argc, char **argv)
         }
         else
         {
-                int i;
                 FILE *f;
 
                 f = fopen(dumpfile, "w");
