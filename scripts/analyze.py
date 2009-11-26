@@ -7,14 +7,23 @@ class Info:
                 this.floats  = False
                 this.maximum = 0
                 this.minimum = 0
+                this.classes = 0
 
 
 def analyze (path):
         blas = Info()
+        labels = set()
         file = open(path, "r")
         for line in file:
                 blas.lines += 1
-                for pair in line.split()[1:]:
+                tokens = line.split()
+                try:
+                        labels.add(int(tokens[0]))
+                except ValueError, e:
+                        e.blasline = blask.lines
+                        file.close()
+                        raise e
+                for pair in tokens[1:]:
                         try:
                                 stridx, strval = pair.split(":", 1)
                                 index = int(stridx)
@@ -39,6 +48,7 @@ def analyze (path):
                         elif value < blas.minimum:
                                 blas.minimum = value
         file.close()
+        blas.classes = len(labels)
         return blas
 
 
@@ -54,6 +64,7 @@ def save (blas, path):
                 output.write("floats   no\n")
                 output.write("maximum  %ld\n" % blas.maximum)
                 output.write("minimum  %ld\n" % blas.minimum)
+        output.write("classes  %d\n" % blas.classes)
         output.close()
 
 
@@ -93,8 +104,12 @@ for path in filelist:
                 trblas = analyze(path + ".trn")
                 blas.indices = max(trblas.indices, blas.indices)
                 blas.floats = blas.floats or trblas.floats
+                if blas.classes > trblas.classes:
+                        print "WARNING: %s.tst has more class labels than %s.trn" % (path, path)
+                blas.classes = max(trblas.classes, blas.classes)
                 trblas.indices = blas.indices
                 trblas.floats = blas.floats
+                trblas.classes = blas.classes
         except OSError, e:
                 print "ERROR: Could not open %s: %s" % (path, e)
                 continue
