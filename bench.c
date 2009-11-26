@@ -39,7 +39,7 @@ static void usage (const char *progname)
 "    -r, --runs=N          Execute N runs for statistical purposes.  In the\n"
 "                          absence of this option, three runs are performed.\n"
 "                          This parameter is ignored when combined with\n"
-"                          \"-d\" or \"--dump\".\n\n"
+"                          \"-o\" or \"--output\".\n\n"
 "    -s, --scalar          Run a non-vectorized version of the algorithm\n"
 "                          instead of the vectorized one.\n\n"
 "    -t, --type=TYPE       Load data as the given TYPE.  Possible types are:\n"
