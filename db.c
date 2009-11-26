@@ -62,6 +62,7 @@ static void close_file (struct file *f)
 static void read_info (struct file *file, struct db *db)
 {
         char *line, *next;
+        double drop;
 
         /* Read the values in order, no need to check for the labels.  If the
          * order ever changes in the Python analyzer, it can also be changed
@@ -71,7 +72,23 @@ static void read_info (struct file *file, struct db *db)
         line = next + 1;
         db->real_dimensions = (int) strtol(&line[9], &next, 10);
         line = next + 1;
-        db->has_floats = line[9] == 'y';
+        if (line[9] == 'y')
+        {
+                db->has_floats = 1;
+                next = &line[12];
+        }
+        else
+        {
+                db->has_floats = 0;
+                next = &line[11];
+        }
+        line = next + 1;
+        /* Drop maximum and minimum */
+        drop = strtod(&line[9], &next);
+        line = next + 1;
+        drop = strtod(&line[9], &next);
+        line = next + 1;
+        db->klass_count = (int) strtol(&line[9], &next, 10);
 }
 
 
@@ -254,6 +271,7 @@ void print_db_info (struct db *db)
         printf("    There are %d elements\n", db->count);
         printf("    There are %d dimensions, of which %d are padding\n",
                db->dimensions, padcolumns);
+        printf("    There are %d different classes\n", db->klass_count);
         printf("    Class array is %u bytes in size\n",
                (unsigned int) (db->count * sizeof(int)));
         printf("    Data array is %u bytes, of which %u (%.1f%%) are padding\n",

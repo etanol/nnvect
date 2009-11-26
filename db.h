@@ -12,6 +12,7 @@ struct db
         int dimensions;
         int real_dimensions;
         int has_floats;
+        int klass_count;
         int *klass;
         void *data;
         void *distance;
