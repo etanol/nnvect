@@ -9,6 +9,8 @@ output=precisions.txt
 ram_dir='/dev/shm'
 svm_train='../libsvm-2.9/svm-train'
 svm_predict='../libsvm-2.9/svm-predict'
+lin_train='../liblinear-1.5/train'
+lin_predict='../liblinear-1.5/predict'
 
 #
 # Obtain the results
@@ -54,18 +56,32 @@ do
         $svm_predict $rf.tst $rf.model results/$bf.libsvm
         rm -f $rf.*
     fi
+
+    #
+    # Execute the LibLINEAR version
+    #
+    rf=$ram_dir/$bf
+    if [ ! -f results/$bf.liblinear ]
+    then
+        cp $f.trn $rf.trn
+        cp $f.tst $rf.tst
+        $lin_train $rf.trn $rf.model
+        $lin_predict $rf.tst $rf.model results/$bf.liblinear
+        rm -f $rf.*
+    fi
+
 done
 
 
 #
 # Compare the results
 #
-printf "%-15s  %6s  %6s  %6s  %6s  %6s  %6s\n" 'Data file' byte short int float double SVM >$output
+printf "%-15s  %6s  %6s  %6s  %6s  %6s  %6s  %6s\n" 'Data file' byte short int float double SVM LINEAR >$output
 for f in $files
 do
     bf=`basename $f`
     printf "%-15s" ${bf%.scale}
-    for r in nn-byte nn-short nn-int nn-float nn-double libsvm
+    for r in nn-byte nn-short nn-int nn-float nn-double libsvm liblinear
     do
         if [ -f results/$bf.$r ]
         then
