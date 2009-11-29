@@ -1,6 +1,7 @@
 #include "util.h"
 #include "db.h"
 #include "nn.h"
+#include "knn.h"
 #include "stats.h"
 
 #include <ctype.h>
@@ -11,16 +12,17 @@
 
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "b:ho:r:st:";
+static char OptString[] = "b:hk:o:r:st:";
 
 static struct option LongOpts[] = {
-        { "blocksize", required_argument, NULL, 'b' },
-        { "help",      no_argument,       NULL, 'h' },
-        { "output",    required_argument, NULL, 'o' },
-        { "runs",      required_argument, NULL, 'r' },
-        { "scalar",    no_argument,       NULL, 's' },
-        { "type",      required_argument, NULL, 't' },
-        { NULL,        0,                 NULL, 0   }
+        { "blocksize",  required_argument, NULL, 'b' },
+        { "help",       no_argument,       NULL, 'h' },
+        { "neighbours", required_argument, NULL, 'k' },
+        { "output",     required_argument, NULL, 'o' },
+        { "runs",       required_argument, NULL, 'r' },
+        { "scalar",     no_argument,       NULL, 's' },
+        { "type",       required_argument, NULL, 't' },
+        { NULL,         0,                 NULL, 0   }
 };
 
 
@@ -34,6 +36,10 @@ static void usage (const char *progname)
 "                          zero (the default) forces a non-blocking\n"
 "                          implementation.\n\n"
 "    -h, --help            This help.\n\n"
+"    -k, --neighbours=K    Classify according to the K nearest neighbors.\n"
+"                          Setting this value to a number greater than 1\n"
+"                          forces \"-s\" or \"--scalar\".  By default only\n"
+"                          the nearest neighbour (K = 1) is calculated.\n\n"
 "    -o, --output=FILE     Save the calculated results to FILE in order to\n"
 "                          compare them against valid solutions.\n\n"
 "    -r, --runs=N          Execute N runs for statistical purposes.  In the\n"
@@ -82,12 +88,13 @@ static inline double mops (struct db *train, struct db *test, double secs)
 int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
-        int cmdopt, has_opts, want_scalar, r, runs, i, hits;
+        int cmdopt, has_opts, want_scalar, r, runs, i, hits, k;
         int block_limit;
         int *original;
         enum valuetype type;
         struct db *db, *train_db;
         struct timestats *ts;
+        struct nbhood *nbh;
 
         progname = argv[0];
         dumpfile = NULL;
@@ -98,6 +105,7 @@ int main (int argc, char **argv)
         mops_label = "MFLOPS";
         want_scalar = 0;
         has_opts = 1;
+        k = 1;
 
         while (has_opts)
         {
@@ -117,6 +125,16 @@ int main (int argc, char **argv)
                         break;
                 case 'h':
                         usage(progname);
+                        break;
+                case 'k':
+                        k = atoi(optarg);
+                        if (k <= 0)
+                        {
+                                k = 1;
+                                warning("Invalid value for k: %s", optarg);
+                        }
+                        else if (k > 1)
+                                want_scalar = 1;
                         break;
                 case 'o':
                         if (dumpfile != NULL)
@@ -202,6 +220,8 @@ int main (int argc, char **argv)
         if (db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", db->dimensions,
                       train_db->dimensions);
+        if (k > 1)
+                nbh = create_neighbourhood(k, db);
 
         /* Save original results for accuracy testing */
         original = xmalloc(sizeof(int) * db->count);
@@ -215,12 +235,27 @@ int main (int argc, char **argv)
 
                 printf("Run %d of %d ... ", r + 1, runs);
                 fflush(stdout);
-                start_run(ts);
-                nn(type, want_scalar, train_db, db);
-                stop_run(ts);
+                if (k > 1)
+                {
+                        clear_neighbourhood(k, db, nbh);
+                        start_run(ts);
+                        knn(k, type, train_db, db, nbh);
+                        stop_run(ts);
+                }
+                else
+                {
+                        start_run(ts);
+                        nn(type, want_scalar, train_db, db);
+                        stop_run(ts);
+                }
                 t = get_last_run_time(ts);
                 printf("%lf s  (%.03lf %s)\n", t, mops(train_db, db, t),
                        mops_label);
+        }
+        if (k > 1)
+        {
+                classify(k, db, nbh);
+                free_neighbourhood(nbh);
         }
 
         /* Measure accuracy */
