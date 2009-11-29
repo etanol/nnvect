@@ -61,6 +61,7 @@ static void close_file (struct file *f)
 
 static void read_info (struct file *file, struct db *db)
 {
+        int i;
         char *line, *next;
         double drop;
 
@@ -88,7 +89,14 @@ static void read_info (struct file *file, struct db *db)
         line = next + 1;
         drop = strtod(&line[9], &next);
         line = next + 1;
-        db->klass_count = (int) strtol(&line[9], &next, 10);
+        db->label_count = (int) strtol(&line[9], &next, 10);
+        line = next + 1;
+        db->label = xmalloc(db->label_count * sizeof(int));
+        for (i = 0;  i < db->label_count;  i++)
+        {
+                db->label[i] = (int) strtol(&line[9], &next, 10);
+                line = next + 1;
+        }
 }
 
 
@@ -271,7 +279,7 @@ void print_db_info (struct db *db)
         printf("    There are %d elements\n", db->count);
         printf("    There are %d dimensions, of which %d are padding\n",
                db->dimensions, padcolumns);
-        printf("    There are %d different classes\n", db->klass_count);
+        printf("    There are %d different classes\n", db->label_count);
         printf("    Class array is %u bytes in size\n",
                (unsigned int) (db->count * sizeof(int)));
         printf("    Data array is %u bytes, of which %u (%.1f%%) are padding\n",
@@ -302,6 +310,7 @@ void free_db (struct db *db)
 {
         if (db->distance != NULL)
                 free(db->distance);
+        free(db->label);
         free(db->data);
         free(db->klass);
         free(db);
