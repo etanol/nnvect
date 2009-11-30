@@ -106,7 +106,7 @@ for path in filelist:
                 blas.floats = blas.floats or trblas.floats
                 if blas.classes > trblas.classes:
                         print "WARNING: %s.tst has more class labels than %s.trn" % (path, path)
-                blas.classes = union(trblas.classes, blas.classes)
+                blas.classes = trblas.classes | blas.classes
                 trblas.indices = blas.indices
                 trblas.floats = blas.floats
                 trblas.classes = blas.classes
