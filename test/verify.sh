@@ -10,8 +10,7 @@ FAILED=''
 #     $1 --> executed binary
 #     $2 --> test data
 #     $3 --> data type
-#     $4 --> scalar or vector
-#     $5 --> block size (optional)
+#     $4 --> identificative tag
 #
 check()
 {
@@ -22,7 +21,8 @@ check()
     then
         printf '.'
     else
-        dumpfile=$FPREFIX-$2-$1-$3.$4 mv $RFILE $dumpfile
+        dumpfile=$FPREFIX-$2-$1-$3.$4
+        mv $RFILE $dumpfile
         FAILED="$FAILED $dumpfile"
         printf '!'
     fi
@@ -30,31 +30,36 @@ check()
 
 
 #
-# Test function.  Arguments are:
+# Test function for 1-NN.  Arguments are:
 #
 #     $1 --> binary to execute
 #     $2 --> test data to load and use
-#     $3 --> size of the block (optional)
 #
 run_test()
 {
-    for t in "byte  "  "short "  "int   "  "float "  "double"
+    for t in byte short int float double
     do
         ../$1 --output=$RFILE --type=$t --scalar $2 >/dev/null 2>&1
         check $1 $2 $t scalar
         ../$1 --output=$RFILE --type=$t $2 >/dev/null 2>&1
         check $1 $2 $t vector
     done
-    if [ -n "$3" ]
-    then
-        for t in "byte  "  "short "  "int   "  "float "  "double"
-        do
-            ../$1 --output=$RFILE --blocksize=$3 --type=$t --scalar $2 >/dev/null 2>&1
-            check $1 $2 $t scalar $3
-            ../$1 --output=$RFILE --blocksize=$3 --type=$t $2 >/dev/null 2>&1
-            check $1 $2 $t vector $3
-        done
-    fi
+}
+
+
+#
+# Test function for k-NN.  Arguments are:
+#
+#     $1 --> value for k (number of neighbours to use)
+#     $2 --> test data to load and use
+#
+knn_test()
+{
+    for t in byte short int float double
+    do
+        ../simple --output=$RFILE --type=$t --neighbours=$1 $2 >/dev/null 2>&1
+        check simple $2 $t knn
+    done
 }
 
 
@@ -67,11 +72,15 @@ echo
 echo
 echo "====  TESTING  ===="
 run_test simple basic
-run_test simple large  1000
+run_test simple large
 run_test unroll2 basic
-run_test unroll2 large 1000
+run_test unroll2 large
 run_test unroll4 basic
-run_test unroll4 large 1000
+run_test unroll4 large
+knn_test 2 basic
+knn_test 3 large
+knn_test 5 large
+knn_test 7 large
 echo
 
 if [ -n "$FAILED" ]
