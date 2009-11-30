@@ -6,8 +6,7 @@
 #include <limits.h>
 #include <float.h>
 
-#define DECLARE(f)  extern void f##_U (int, int, void *, int *, int, void *, int *); \
-                    extern void f##_B (int, int, int, void *, int *, int, int, void *, int *, void *);
+#define DECLARE(f) extern void f (int, int, int, void *, int *, int, int, void *, int *, void *);
 
 
 /* Sequential versions defined at nnsca-*.c */
@@ -25,7 +24,7 @@ DECLARE(nn_float_vec)
 DECLARE(nn_double_vec)
 
 
-static void clear_tmp_distances (struct db *db)
+void clear_distances (struct db *db)
 {
         int i;
 
@@ -55,67 +54,41 @@ static void clear_tmp_distances (struct db *db)
 
 void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
 {
+        void (*func) (int, int, int, void *, int *, int, int, void *, int *, void *);
+        int blockcount, trblockcount;
+
+        func = NULL;
+        switch (type)
+        {
+        case BYTE:
+                func = (scalar ? nn_byte_sca : nn_byte_vec);
+                break;
+        case SHORT:
+                func = (scalar ? nn_short_sca : nn_short_vec);
+                break;
+        case INT:
+                func = (scalar ? nn_int_sca : nn_int_vec);
+                break;
+        case FLOAT:
+                func = (scalar ? nn_float_sca : nn_float_vec);
+                break;
+        case DOUBLE:
+                func = (scalar ? nn_double_sca : nn_double_vec);
+                break;
+        }
+        if (func == NULL)
+                quit("Invalid combination of implementation and value type, with blocking");
+
         if (trdb->block_items > 0)
-        {
-                /* Select blocked versions */
-                void (*func) (int, int, int, void *, int *, int, int, void *, int *, void *);
-
-                func = NULL;
-                switch (type)
-                {
-                case BYTE:
-                        func = (scalar ? nn_byte_sca_B : nn_byte_vec_B);
-                        break;
-                case SHORT:
-                        func = (scalar ? nn_short_sca_B : nn_short_vec_B);
-                        break;
-                case INT:
-                        func = (scalar ? nn_int_sca_B : nn_int_vec_B);
-                        break;
-                case FLOAT:
-                        func = (scalar ? nn_float_sca_B : nn_float_vec_B);
-                        break;
-                case DOUBLE:
-                        func = (scalar ? nn_double_sca_B : nn_double_vec_B);
-                        break;
-                }
-                if (func == NULL)
-                        quit("Invalid combination of implementation and value type, with blocking");
-
-                clear_tmp_distances(db);
-                func(db->dimensions, trdb->count, trdb->block_items, trdb->data,
-                     trdb->klass, db->count, (db->block_items ? db->block_items : db->count), db->data,
-                     db->klass, db->distance);
-        }
+                trblockcount = trdb->block_items;
         else
-        {
-                /* Select unblocked versions */
-                void (*func) (int, int, void *, int *, int, void *, int *);
+                trblockcount = trdb->count;
+        if (db->block_items > 0)
+                blockcount = db->block_items;
+        else
+                blockcount = db->count;
 
-                func = NULL;
-                switch (type)
-                {
-                case BYTE:
-                        func = (scalar ? nn_byte_sca_U : nn_byte_vec_U);
-                        break;
-                case SHORT:
-                        func = (scalar ? nn_short_sca_U : nn_short_vec_U);
-                        break;
-                case INT:
-                        func = (scalar ? nn_int_sca_U : nn_int_vec_U);
-                        break;
-                case FLOAT:
-                        func = (scalar ? nn_float_sca_U : nn_float_vec_U);
-                        break;
-                case DOUBLE:
-                        func = (scalar ? nn_double_sca_U : nn_double_vec_U);
-                        break;
-                }
-                if (func == NULL)
-                        quit("Invalid combination of implementation and value type, without blocking");
-
-                func(db->dimensions, trdb->count, trdb->data, trdb->klass,
-                     db->count, db->data, db->klass);
-        }
+        func(db->dimensions, trdb->count, trblockcount, trdb->data, trdb->klass,
+             db->count, blockcount, db->data, db->klass, db->distance);
 }
 

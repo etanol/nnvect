@@ -225,8 +225,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(fullname, type, test_block_limit, !want_scalar,
-                     train_db->block_items > 0);
+        db = load_db(fullname, type, test_block_limit, !want_scalar, 1);
         free(fullname);
         print_db_info(db);
         printf("\n");
@@ -258,6 +257,7 @@ int main (int argc, char **argv)
                 }
                 else
                 {
+                        clear_distances(db);
                         start_run(ts);
                         nn(type, want_scalar, train_db, db);
                         stop_run(ts);

@@ -7,21 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef void (*U_func) (int, int, void *, int *, int, void *, int, int *, int *, void *);
-typedef void (*B_func) (int, int, int, void *, int *, int, void *, int, int *, int *, void *);
+typedef void (*knn_func) (int, int, int, void *, int *, int, int, void *, int,
+                          int *, int *, void *);
 
-
-void knn_byte_U   (int, int, char *,   int *, int, char *,   int, int *, int *, unsigned int *);
-void knn_short_U  (int, int, short *,  int *, int, short *,  int, int *, int *, unsigned int *);
-void knn_int_U    (int, int, int *,    int *, int, int *,    int, int *, int *, unsigned int *);
-void knn_float_U  (int, int, float *,  int *, int, float *,  int, int *, int *, float *);
-void knn_double_U (int, int, double *, int *, int, double *, int, int *, int *, double *);
-
-void knn_byte_B   (int, int, int, char *,   int *, int, char *,   int, int *, int *, unsigned int *);
-void knn_short_B  (int, int, int, short *,  int *, int, short *,  int, int *, int *, unsigned int *);
-void knn_int_B    (int, int, int, int *,    int *, int, int *,    int, int *, int *, unsigned int *);
-void knn_float_B  (int, int, int, float *,  int *, int, float *,  int, int *, int *, float *);
-void knn_double_B (int, int, int, double *, int *, int, double *, int, int *, int *, double *);
+void knn_byte   (int, int, int, char *,   int *, int, int, char *,   int, int *, int *, unsigned int *);
+void knn_short  (int, int, int, short *,  int *, int, int, short *,  int, int *, int *, unsigned int *);
+void knn_int    (int, int, int, int *,    int *, int, int, int *,    int, int *, int *, unsigned int *);
+void knn_float  (int, int, int, float *,  int *, int, int, float *,  int, int *, int *, float *);
+void knn_double (int, int, int, double *, int *, int, int, double *, int, int *, int *, double *);
 
 
 struct nbhood *create_neighbourhood (int k, struct db *db)
@@ -92,46 +85,33 @@ void free_neighbourhood (struct nbhood *nbh)
 void knn (int k, enum valuetype type, struct db *trdb, struct db *db,
           struct nbhood * nbh)
 {
+        int blockcount, trblockcount;
+        knn_func func;
+
+        func = NULL;
+        switch (type)
+        {
+                case BYTE  :  func = (knn_func) knn_byte;    break;
+                case SHORT :  func = (knn_func) knn_short;   break;
+                case INT   :  func = (knn_func) knn_int;     break;
+                case FLOAT :  func = (knn_func) knn_float;   break;
+                case DOUBLE:  func = (knn_func) knn_double;  break;
+        }
+        if (func == NULL)
+                quit("Invalid combination of implementation, k-neighbours and value type, with blocking");
+
         if (trdb->block_items > 0)
-        {
-                /* Select blocked versions */
-                B_func func = NULL;
-
-                switch (type)
-                {
-                        case BYTE  :  func = (B_func) knn_byte_B;    break;
-                        case SHORT :  func = (B_func) knn_short_B;   break;
-                        case INT   :  func = (B_func) knn_int_B;     break;
-                        case FLOAT :  func = (B_func) knn_float_B;   break;
-                        case DOUBLE:  func = (B_func) knn_double_B;  break;
-                }
-                if (func == NULL)
-                        quit("Invalid combination of implementation, k-neighbours and value type, with blocking");
-
-                func(db->dimensions, trdb->count, trdb->block_items, trdb->data,
-                     trdb->klass, db->count, db->data, k, nbh->imax, nbh->klass,
-                     nbh->distance);
-        }
+                trblockcount = trdb->block_items;
         else
-        {
-                /* Select unblocked versions */
-                U_func func = NULL;
+                trblockcount = trdb->count;
+        if (db->block_items > 0)
+                blockcount = db->block_items;
+        else
+                blockcount = db->count;
 
-                switch (type)
-                {
-                        case BYTE  :  func = (U_func) knn_byte_U;    break;
-                        case SHORT :  func = (U_func) knn_short_U;   break;
-                        case INT   :  func = (U_func) knn_int_U;     break;
-                        case FLOAT :  func = (U_func) knn_float_U;   break;
-                        case DOUBLE:  func = (U_func) knn_double_U;  break;
-                }
-                if (func == NULL)
-                        quit("Invalid combination of implementation, k-neighbours and value type, without blocking");
-
-                func(db->dimensions, trdb->count, trdb->data, trdb->klass,
-                     db->count, db->data, k, nbh->imax, nbh->klass,
-                     nbh->distance);
-        }
+        func(db->dimensions, trdb->count, trblockcount, trdb->data, trdb->klass,
+             db->count, blockcount, db->data, k, nbh->imax, nbh->klass,
+             nbh->distance);
 }
 
 
@@ -256,348 +236,151 @@ void classify (int k, struct db *db, struct nbhood *nbh)
 
 
 
-/******************************************************************************/
-/*                                                                            */
-/*                             UNBLOCKED VERSIONS                             */
-/*                                                                            */
-/******************************************************************************/
-
-
 /******************************  INTEGER VALUES  ******************************/
 
-void knn_byte_U (int dimensions, int trcount, char *trdata, int *trklass,
-                 int count, char *data, int k, int *imax, int *nklass,
-                 unsigned int *distance)
+void knn_byte (int dimensions, int trcount, int trblockcount, char *trdata,
+               int *trklass, int count, int blockcount, char *data, int k,
+               int *imax, int *nklass, unsigned int *distance)
 {
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int d, j, b;
         unsigned int dist;
         char tmp;
 
-        #pragma omp parallel for schedule(static) private(i, b, tn, ti, dist, \
-                d, tmp, j)
-        for (n = 0;  n < count;  n++)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                i = n * dimensions;
-                b = n * k;
-                for (tn = 0;  tn < trcount;  tn++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        ti = tn * dimensions;
-                        dist = 0;
-                        for (d = 0;  d < dimensions;  d++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule (static) private(i, \
+                                b, tn, ti, dist, d, tmp, j)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                tmp = data[i + d] - trdata[ti + d];
-                                dist += tmp * tmp;
-                        }
-                        if (dist < distance[b + imax[n]])
-                        {
-                                distance[b + imax[n]] = dist;
-                                nklass[b + imax[n]] = trklass[tn];
-                                imax[n] = 0;
-                                for (j = 1;  j < k;  j++)
-                                        if (distance[b + j] > distance[b + imax[n]])
-                                                imax[n] = j;
+                                i = n * dimensions;
+                                b = n * k;
+                                for (tn = tbn;  tn < tbc;  tn++)
+                                {
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions; d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < distance[b + imax[n]])
+                                        {
+                                                distance[b + imax[n]] = dist;
+                                                nklass[b + imax[n]] = trklass[tn];
+                                                imax[n] = 0;
+                                                for (j = 1;  j < k;  j++)
+                                                        if (distance[b + j] > distance[b + imax[n]])
+                                                                imax[n] = j;
+                                        }
+                                }
                         }
                 }
         }
 }
 
 
-void knn_short_U (int dimensions, int trcount, short *trdata, int *trklass,
-                  int count, short *data, int k, int *imax, int *nklass,
-                  unsigned int *distance)
+void knn_short (int dimensions, int trcount, int trblockcount, short *trdata,
+                int *trklass, int count, int blockcount, short *data, int k,
+                int *imax, int *nklass, unsigned int *distance)
 {
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int d, j, b;
         unsigned int dist;
         short tmp;
 
-        #pragma omp parallel for schedule(static) private(i, b, tn, ti, dist, \
-                d, tmp, j)
-        for (n = 0;  n < count;  n++)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                i = n * dimensions;
-                b = n * k;
-                for (tn = 0;  tn < trcount;  tn++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        ti = tn * dimensions;
-                        dist = 0;
-                        for (d = 0;  d < dimensions;  d++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule (static) private(i, \
+                                b, tn, ti, dist, d, tmp, j)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                tmp = data[i + d] - trdata[ti + d];
-                                dist += tmp * tmp;
-                        }
-                        if (dist < distance[b + imax[n]])
-                        {
-                                distance[b + imax[n]] = dist;
-                                nklass[b + imax[n]] = trklass[tn];
-                                imax[n] = 0;
-                                for (j = 1;  j < k;  j++)
-                                        if (distance[b + j] > distance[b + imax[n]])
-                                                imax[n] = j;
+                                i = n * dimensions;
+                                b = n * k;
+                                for (tn = tbn;  tn < tbc;  tn++)
+                                {
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions; d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < distance[b + imax[n]])
+                                        {
+                                                distance[b + imax[n]] = dist;
+                                                nklass[b + imax[n]] = trklass[tn];
+                                                imax[n] = 0;
+                                                for (j = 1;  j < k;  j++)
+                                                        if (distance[b + j] > distance[b + imax[n]])
+                                                                imax[n] = j;
+                                        }
+                                }
                         }
                 }
         }
 }
 
 
-void knn_int_U (int dimensions, int trcount, int *trdata, int *trklass,
-                int count, int *data, int k, int *imax, int *nklass,
-                unsigned int *distance)
+void knn_int (int dimensions, int trcount, int trblockcount, int *trdata,
+              int *trklass, int count, int blockcount, int *data, int k,
+              int *imax, int *nklass, unsigned int *distance)
 {
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int d, j, b;
         unsigned int dist;
         int tmp;
 
-        #pragma omp parallel for schedule(static) private(i, b, tn, ti, dist, \
-                d, tmp, j)
-        for (n = 0;  n < count;  n++)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                i = n * dimensions;
-                b = n * k;
-                for (tn = 0;  tn < trcount;  tn++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        ti = tn * dimensions;
-                        dist = 0;
-                        for (d = 0;  d < dimensions;  d++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule (static) private(i, \
+                                b, tn, ti, dist, d, tmp, j)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                tmp = data[i + d] - trdata[ti + d];
-                                dist += tmp * tmp;
-                        }
-                        if (dist < distance[b + imax[n]])
-                        {
-                                distance[b + imax[n]] = dist;
-                                nklass[b + imax[n]] = trklass[tn];
-                                imax[n] = 0;
-                                for (j = 1;  j < k;  j++)
-                                        if (distance[b + j] > distance[b + imax[n]])
-                                                imax[n] = j;
-                        }
-                }
-        }
-}
-
-
-/**************************  FLOATING POINT VALUES  **************************/
-
-void knn_float_U (int dimensions, int trcount, float *trdata, int *trklass,
-                  int count, float *data, int k, int *imax, int *nklass,
-                  float *distance)
-{
-        int n, tn;
-        int i, ti;
-        int d, j, b;
-        float dist, tmp;
-
-        #pragma omp parallel for schedule(static) private(i, b, tn, ti, dist, \
-                d, tmp, j)
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                b = n * k;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = 0.0f;
-                        for (d = 0;  d < dimensions;  d++)
-                        {
-                                tmp = data[i + d] - trdata[ti + d];
-                                dist += tmp * tmp;
-                        }
-                        if (dist < distance[b + imax[n]])
-                        {
-                                distance[b + imax[n]] = dist;
-                                nklass[b + imax[n]] = trklass[tn];
-                                imax[n] = 0;
-                                for (j = 1;  j < k;  j++)
-                                        if (distance[b + j] > distance[b + imax[n]])
-                                                imax[n] = j;
-                        }
-                }
-        }
-}
-
-
-void knn_double_U (int dimensions, int trcount, double *trdata, int *trklass,
-                   int count, double *data, int k, int *imax, int *nklass,
-                   double *distance)
-{
-        int n, tn;
-        int i, ti;
-        int d, j, b;
-        double dist, tmp;
-
-        #pragma omp parallel for schedule(static) private(i, b, tn, ti, dist, \
-                d, tmp, j)
-        for (n = 0;  n < count;  n++)
-        {
-                i = n * dimensions;
-                b = n * k;
-                for (tn = 0;  tn < trcount;  tn++)
-                {
-                        ti = tn * dimensions;
-                        dist = 0.0;
-                        for (d = 0;  d < dimensions;  d++)
-                        {
-                                tmp = data[i + d] - trdata[ti + d];
-                                dist += tmp * tmp;
-                        }
-                        if (dist < distance[b + imax[n]])
-                        {
-                                distance[b + imax[n]] = dist;
-                                nklass[b + imax[n]] = trklass[tn];
-                                imax[n] = 0;
-                                for (j = 1;  j < k;  j++)
-                                        if (distance[b + j] > distance[b + imax[n]])
-                                                imax[n] = j;
-                        }
-                }
-        }
-}
-
-
-
-/******************************************************************************/
-/*                                                                            */
-/*                              BLOCKED VERSIONS                              */
-/*                                                                            */
-/******************************************************************************/
-
-
-/******************************  INTEGER VALUES  ******************************/
-
-void knn_byte_B (int dimensions, int trcount, int trblockcount, char *trdata,
-                 int *trklass, int count, char *data, int k, int *imax,
-                 int *nklass, unsigned int *distance)
-{
-        int tbc, tbn;
-        int n, tn;
-        int i, ti;
-        int d, j, b;
-        unsigned int dist;
-        char tmp;
-
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
-        {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule (static) private(i, b, tn, \
-                        ti, dist, d, tmp, j)
-                for (n = 0;  n < count;  n++)
-                {
-                        i = n * dimensions;
-                        b = n * k;
-                        for (tn = tbn;  tn < tbc;  tn++)
-                        {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions; d++)
+                                i = n * dimensions;
+                                b = n * k;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
-                                }
-                                if (dist < distance[b + imax[n]])
-                                {
-                                        distance[b + imax[n]] = dist;
-                                        nklass[b + imax[n]] = trklass[tn];
-                                        imax[n] = 0;
-                                        for (j = 1;  j < k;  j++)
-                                                if (distance[b + j] > distance[b + imax[n]])
-                                                        imax[n] = j;
-                                }
-                        }
-                }
-        }
-}
-
-
-void knn_short_B (int dimensions, int trcount, int trblockcount, short *trdata,
-                  int *trklass, int count, short *data, int k, int *imax,
-                  int *nklass, unsigned int *distance)
-{
-        int tbc, tbn;
-        int n, tn;
-        int i, ti;
-        int d, j, b;
-        unsigned int dist;
-        short tmp;
-
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
-        {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule (static) private(i, b, tn, \
-                        ti, dist, d, tmp, j)
-                for (n = 0;  n < count;  n++)
-                {
-                        i = n * dimensions;
-                        b = n * k;
-                        for (tn = tbn;  tn < tbc;  tn++)
-                        {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions; d++)
-                                {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
-                                }
-                                if (dist < distance[b + imax[n]])
-                                {
-                                        distance[b + imax[n]] = dist;
-                                        nklass[b + imax[n]] = trklass[tn];
-                                        imax[n] = 0;
-                                        for (j = 1;  j < k;  j++)
-                                                if (distance[b + j] > distance[b + imax[n]])
-                                                        imax[n] = j;
-                                }
-                        }
-                }
-        }
-}
-
-
-void knn_int_B (int dimensions, int trcount, int trblockcount, int *trdata,
-                 int *trklass, int count, int *data, int k, int *imax,
-                 int *nklass, unsigned int *distance)
-{
-        int tbc, tbn;
-        int n, tn;
-        int i, ti;
-        int d, j, b;
-        unsigned int dist;
-        int tmp;
-
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
-        {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule (static) private(i, b, tn, \
-                        ti, dist, d, tmp, j)
-                for (n = 0;  n < count;  n++)
-                {
-                        i = n * dimensions;
-                        b = n * k;
-                        for (tn = tbn;  tn < tbc;  tn++)
-                        {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions; d++)
-                                {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
-                                }
-                                if (dist < distance[b + imax[n]])
-                                {
-                                        distance[b + imax[n]] = dist;
-                                        nklass[b + imax[n]] = trklass[tn];
-                                        imax[n] = 0;
-                                        for (j = 1;  j < k;  j++)
-                                                if (distance[b + j] > distance[b + imax[n]])
-                                                        imax[n] = j;
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions; d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < distance[b + imax[n]])
+                                        {
+                                                distance[b + imax[n]] = dist;
+                                                nklass[b + imax[n]] = trklass[tn];
+                                                imax[n] = 0;
+                                                for (j = 1;  j < k;  j++)
+                                                        if (distance[b + j] > distance[b + imax[n]])
+                                                                imax[n] = j;
+                                        }
                                 }
                         }
                 }
@@ -607,43 +390,48 @@ void knn_int_B (int dimensions, int trcount, int trblockcount, int *trdata,
 
 /**************************  FLOATING POINT VALUES  **************************/
 
-void knn_float_B (int dimensions, int trcount, int trblockcount, float *trdata,
-                  int *trklass, int count, float *data, int k, int *imax,
-                  int *nklass, float *distance)
+void knn_float (int dimensions, int trcount, int trblockcount, float *trdata,
+                int *trklass, int count, int blockcount, float *data, int k,
+                int *imax, int *nklass, float *distance)
 {
-        int tbc, tbn;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int d, j, b;
         float dist, tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule (static) private(i, b, tn, \
-                        ti, dist, d, tmp, j)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        b = n * k;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule (static) private(i, \
+                                b, tn, ti, dist, d, tmp, j)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0.0f;
-                                for (d = 0;  d < dimensions; d++)
+                                i = n * dimensions;
+                                b = n * k;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
-                                }
-                                if (dist < distance[b + imax[n]])
-                                {
-                                        distance[b + imax[n]] = dist;
-                                        nklass[b + imax[n]] = trklass[tn];
-                                        imax[n] = 0;
-                                        for (j = 1;  j < k;  j++)
-                                                if (distance[b + j] > distance[b + imax[n]])
-                                                        imax[n] = j;
+                                        ti = tn * dimensions;
+                                        dist = 0.0f;
+                                        for (d = 0;  d < dimensions; d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < distance[b + imax[n]])
+                                        {
+                                                distance[b + imax[n]] = dist;
+                                                nklass[b + imax[n]] = trklass[tn];
+                                                imax[n] = 0;
+                                                for (j = 1;  j < k;  j++)
+                                                        if (distance[b + j] > distance[b + imax[n]])
+                                                                imax[n] = j;
+                                        }
                                 }
                         }
                 }
@@ -651,43 +439,48 @@ void knn_float_B (int dimensions, int trcount, int trblockcount, float *trdata,
 }
 
 
-void knn_double_B (int dimensions, int trcount, int trblockcount,
-                   double *trdata, int *trklass, int count, double *data,
-                   int k, int *imax, int *nklass, double *distance)
+void knn_double (int dimensions, int trcount, int trblockcount,
+                 double *trdata, int *trklass, int count, int blockcount,
+                 double *data, int k, int *imax, int *nklass, double *distance)
 {
-        int tbc, tbn;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int d, j, b;
         double dist, tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule (static) private(i, b, tn, \
-                        ti, dist, d, tmp, j)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        b = n * k;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule (static) private(i, \
+                                b, tn, ti, dist, d, tmp, j)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0.0;
-                                for (d = 0;  d < dimensions; d++)
+                                i = n * dimensions;
+                                b = n * k;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
-                                }
-                                if (dist < distance[b + imax[n]])
-                                {
-                                        distance[b + imax[n]] = dist;
-                                        nklass[b + imax[n]] = trklass[tn];
-                                        imax[n] = 0;
-                                        for (j = 1;  j < k;  j++)
-                                                if (distance[b + j] > distance[b + imax[n]])
-                                                        imax[n] = j;
+                                        ti = tn * dimensions;
+                                        dist = 0.0;
+                                        for (d = 0;  d < dimensions; d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < distance[b + imax[n]])
+                                        {
+                                                distance[b + imax[n]] = dist;
+                                                nklass[b + imax[n]] = trklass[tn];
+                                                imax[n] = 0;
+                                                for (j = 1;  j < k;  j++)
+                                                        if (distance[b + j] > distance[b + imax[n]])
+                                                                imax[n] = j;
+                                        }
                                 }
                         }
                 }

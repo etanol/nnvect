@@ -15,6 +15,7 @@ enum valuetype
 struct db;
 
 int adjusted_block_count (int);
+void clear_distances (struct db *);
 void nn (enum valuetype, int, struct db *, struct db *);
 
 #endif /* __nnvect_nn */
