@@ -7,7 +7,7 @@
 #include <float.h>
 
 #define DECLARE(f)  extern void f##_U (int, int, void *, int *, int, void *, int *); \
-                    extern void f##_B (int, int, int, void *, int *, int, void *, int *, void *);
+                    extern void f##_B (int, int, int, void *, int *, int, int, void *, int *, void *);
 
 
 /* Sequential versions defined at nnsca-*.c */
@@ -58,7 +58,7 @@ void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
         if (trdb->block_items > 0)
         {
                 /* Select blocked versions */
-                void (*func) (int, int, int, void *, int *, int, void *, int *, void *);
+                void (*func) (int, int, int, void *, int *, int, int, void *, int *, void *);
 
                 func = NULL;
                 switch (type)
@@ -84,7 +84,8 @@ void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
 
                 clear_tmp_distances(db);
                 func(db->dimensions, trdb->count, trdb->block_items, trdb->data,
-                     trdb->klass, db->count, db->data, db->klass, db->distance);
+                     trdb->klass, db->count, (db->block_items ? db->block_items : db->count), db->data,
+                     db->klass, db->distance);
         }
         else
         {

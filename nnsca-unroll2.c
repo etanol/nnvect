@@ -365,10 +365,10 @@ void nn_double_sca_U (int dimensions, int trcount, double *trdata, int *trklass,
 /******************************  INTEGER VALUES  ******************************/
 
 void nn_byte_sca_B (int dimensions, int trcount, int trblockcount, char *trdata,
-                    int *trklass, int count, char *data, int *klass,
-                    unsigned int *distance) 
+                    int *trklass, int count, int blockcount, char *data,
+                    int *klass, unsigned int *distance)
 {
-        int tbc, tbcU, tbn;
+        int bc, bn, tbc, tbcU, tbn;
         int n, tn;
         int i, ti1, ti2;
         int cl, d, idx;
@@ -376,74 +376,79 @@ void nn_byte_sca_B (int dimensions, int trcount, int trblockcount, char *trdata,
         unsigned int dist1, dist2;
         char datum, tmp1, tmp2;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                tbcU = tbc & ~0x01;
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
-                        datum, tmp1, tmp2)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbcU;  tn += 2)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        tbcU = tbc & ~0x01;
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                                datum, tmp1, tmp2)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti1 = tn * dimensions;
-                                ti2 = (tn + 1) * dimensions;
-                                dist1 = dist2 = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbcU;  tn += 2)
                                 {
-                                        datum = data[i + d];
-                                        tmp1 = datum - trdata[ti1 + d];
-                                        tmp2 = datum - trdata[ti2 + d];
-                                        dist1 += tmp1 * tmp1;
-                                        dist2 += tmp2 * tmp2;
+                                        ti1 = tn * dimensions;
+                                        ti2 = (tn + 1) * dimensions;
+                                        dist1 = dist2 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                datum = data[i + d];
+                                                tmp1 = datum - trdata[ti1 + d];
+                                                tmp2 = datum - trdata[ti2 + d];
+                                                dist1 += tmp1 * tmp1;
+                                                dist2 += tmp2 * tmp2;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
+                                        if (dist2 < min_distance)
+                                        {
+                                                min_distance = dist2;
+                                                cl = trklass[tn + 1];
+                                                idx = tn + 1;
+                                        }
                                 }
-                                if (dist1 < min_distance)
+                                for (;  tn < tbc;  tn++)
                                 {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
+                                        ti1 = tn * dimensions;
+                                        dist1 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp1 = data[i + d] - trdata[ti1 + d];
+                                                dist1 += tmp1 * tmp1;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist2 < min_distance)
-                                {
-                                        min_distance = dist2;
-                                        cl = trklass[tn + 1];
-                                        idx = tn + 1;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        for (;  tn < tbc;  tn++)
-                        {
-                                ti1 = tn * dimensions;
-                                dist1 = 0;
-                                for (d = 0;  d < dimensions;  d++)
-                                {
-                                        tmp1 = data[i + d] - trdata[ti1 + d];
-                                        dist1 += tmp1 * tmp1;
-                                }
-                                if (dist1 < min_distance)
-                                {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
-                        }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
 
 
 void nn_short_sca_B (int dimensions, int trcount, int trblockcount, short *trdata,
-                     int *trklass, int count, short *data, int *klass,
-                     unsigned int *distance)
+                     int *trklass, int count, int blockcount, short *data,
+                     int *klass, unsigned int *distance)
 {
-        int tbc, tbcU, tbn;
+        int bc, bn, tbc, tbcU, tbn;
         int n, tn;
         int i, ti1, ti2;
         int cl, d, idx;
@@ -451,74 +456,79 @@ void nn_short_sca_B (int dimensions, int trcount, int trblockcount, short *trdat
         unsigned int dist1, dist2;
         short datum, tmp1, tmp2;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                tbcU = tbc & ~0x01;
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
-                        datum, tmp1, tmp2)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbcU;  tn += 2)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        tbcU = tbc & ~0x01;
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                                datum, tmp1, tmp2)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti1 = tn * dimensions;
-                                ti2 = (tn + 1) * dimensions;
-                                dist1 = dist2 = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbcU;  tn += 2)
                                 {
-                                        datum = data[i + d];
-                                        tmp1 = datum - trdata[ti1 + d];
-                                        tmp2 = datum - trdata[ti2 + d];
-                                        dist1 += tmp1 * tmp1;
-                                        dist2 += tmp2 * tmp2;
+                                        ti1 = tn * dimensions;
+                                        ti2 = (tn + 1) * dimensions;
+                                        dist1 = dist2 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                datum = data[i + d];
+                                                tmp1 = datum - trdata[ti1 + d];
+                                                tmp2 = datum - trdata[ti2 + d];
+                                                dist1 += tmp1 * tmp1;
+                                                dist2 += tmp2 * tmp2;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
+                                        if (dist2 < min_distance)
+                                        {
+                                                min_distance = dist2;
+                                                cl = trklass[tn + 1];
+                                                idx = tn + 1;
+                                        }
                                 }
-                                if (dist1 < min_distance)
+                                for (;  tn < tbc;  tn++)
                                 {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
+                                        ti1 = tn * dimensions;
+                                        dist1 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp1 = data[i + d] - trdata[ti1 + d];
+                                                dist1 += tmp1 * tmp1;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist2 < min_distance)
-                                {
-                                        min_distance = dist2;
-                                        cl = trklass[tn + 1];
-                                        idx = tn + 1;
-                                }
+                                distance[n] = min_distance;
+                                klass[n]= cl;
                         }
-                        for (;  tn < tbc;  tn++)
-                        {
-                                ti1 = tn * dimensions;
-                                dist1 = 0;
-                                for (d = 0;  d < dimensions;  d++)
-                                {
-                                        tmp1 = data[i + d] - trdata[ti1 + d];
-                                        dist1 += tmp1 * tmp1;
-                                }
-                                if (dist1 < min_distance)
-                                {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
-                        }
-                        distance[n] = min_distance;
-                        klass[n]= cl;
                 }
         }
 }
 
 
 void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
-                   int *trklass, int count, int *data, int *klass,
-                   unsigned int *distance)
+                   int *trklass, int count, int blockcount, int *data,
+                   int *klass, unsigned int *distance)
 {
-        int tbc, tbcU, tbn;
+        int bc, bn, tbc, tbcU, tbn;
         int n, tn;
         int i, ti1, ti2;
         int cl, d, idx;
@@ -526,64 +536,69 @@ void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
         unsigned int dist1, dist2;
         int datum, tmp1, tmp2;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                tbcU = tbc & ~0x01;
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
-                        datum, tmp1, tmp2)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbcU;  tn += 2)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        tbcU = tbc & ~0x01;
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                                datum, tmp1, tmp2)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti1 = tn * dimensions;
-                                ti2 = (tn + 1) * dimensions;
-                                dist1 = dist2 = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbcU;  tn += 2)
                                 {
-                                        datum = data[i + d];
-                                        tmp1 = datum - trdata[ti1 + d];
-                                        tmp2 = datum - trdata[ti2 + d];
-                                        dist1 += tmp1 * tmp1;
-                                        dist2 += tmp2 * tmp2;
+                                        ti1 = tn * dimensions;
+                                        ti2 = (tn + 1) * dimensions;
+                                        dist1 = dist2 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                datum = data[i + d];
+                                                tmp1 = datum - trdata[ti1 + d];
+                                                tmp2 = datum - trdata[ti2 + d];
+                                                dist1 += tmp1 * tmp1;
+                                                dist2 += tmp2 * tmp2;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
+                                        if (dist2 < min_distance)
+                                        {
+                                                min_distance = dist2;
+                                                cl = trklass[tn + 1];
+                                                idx = tn + 1;
+                                        }
                                 }
-                                if (dist1 < min_distance)
+                                for (;  tn < tbc;  tn++)
                                 {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
+                                        ti1 = tn * dimensions;
+                                        dist1 = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp1 = data[i + d] - trdata[ti1 + d];
+                                                dist1 += tmp1 * tmp1;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist2 < min_distance)
-                                {
-                                        min_distance = dist2;
-                                        cl = trklass[tn + 1];
-                                        idx = tn + 1;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        for (;  tn < tbc;  tn++)
-                        {
-                                ti1 = tn * dimensions;
-                                dist1 = 0;
-                                for (d = 0;  d < dimensions;  d++)
-                                {
-                                        tmp1 = data[i + d] - trdata[ti1 + d];
-                                        dist1 += tmp1 * tmp1;
-                                }
-                                if (dist1 < min_distance)
-                                {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
-                        }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
@@ -592,10 +607,10 @@ void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
 /**************************  FLOATING POINT VALUES  **************************/
 
 void nn_float_sca_B (int dimensions, int trcount, int trblockcount, float *trdata,
-                     int *trklass, int count, float *data, int *klass,
-                     float *distance)
+                     int *trklass, int count, int blockcount, float *data,
+                     int *klass, float *distance)
 {
-        int tbc, tbcU, tbn;
+        int bc, bn, tbc, tbcU, tbn;
         int n, tn;
         int i, ti1, ti2;
         int cl, d, idx;
@@ -603,74 +618,79 @@ void nn_float_sca_B (int dimensions, int trcount, int trblockcount, float *trdat
         float dist1, dist2;
         float tmp1, tmp2;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                tbcU = tbc & ~0x01;
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
-                        datum, tmp1, tmp2)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbcU;  tn += 2)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        tbcU = tbc & ~0x01;
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                                datum, tmp1, tmp2)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti1 = tn * dimensions;
-                                ti2 = (tn + 1) * dimensions;
-                                dist1 = dist2 = 0.0f;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbcU;  tn += 2)
                                 {
-                                        datum = data[i + d];
-                                        tmp1 = datum - trdata[ti1 + d];
-                                        tmp2 = datum - trdata[ti2 + d];
-                                        dist1 += tmp1 * tmp1;
-                                        dist2 += tmp2 * tmp2;
+                                        ti1 = tn * dimensions;
+                                        ti2 = (tn + 1) * dimensions;
+                                        dist1 = dist2 = 0.0f;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                datum = data[i + d];
+                                                tmp1 = datum - trdata[ti1 + d];
+                                                tmp2 = datum - trdata[ti2 + d];
+                                                dist1 += tmp1 * tmp1;
+                                                dist2 += tmp2 * tmp2;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
+                                        if (dist2 < min_distance)
+                                        {
+                                                min_distance = dist2;
+                                                cl = trklass[tn + 1];
+                                                idx = tn + 1;
+                                        }
                                 }
-                                if (dist1 < min_distance)
+                                for (;  tn < tbc;  tn++)
                                 {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
+                                        ti1 = tn * dimensions;
+                                        dist1 = 0.0f;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp1 = data[i + d] - trdata[ti1 + d];
+                                                dist1 += tmp1 * tmp1;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist2 < min_distance)
-                                {
-                                        min_distance = dist2;
-                                        cl = trklass[tn + 1];
-                                        idx = tn + 1;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        for (;  tn < tbc;  tn++)
-                        {
-                                ti1 = tn * dimensions;
-                                dist1 = 0.0f;
-                                for (d = 0;  d < dimensions;  d++)
-                                {
-                                        tmp1 = data[i + d] - trdata[ti1 + d];
-                                        dist1 += tmp1 * tmp1;
-                                }
-                                if (dist1 < min_distance)
-                                {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
-                        }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
 
 
 void nn_double_sca_B (int dimensions, int trcount, int trblockcount, double *trdata,
-                      int *trklass, int count, double *data, int *klass,
-                      double *distance)
+                      int *trklass, int count, int blockcount, double *data,
+                      int *klass, double *distance)
 {
-        int tbc, tbcU, tbn;
+        int bc, bn, tbc, tbcU, tbn;
         int n, tn;
         int i, ti1, ti2;
         int cl, d, idx;
@@ -678,64 +698,69 @@ void nn_double_sca_B (int dimensions, int trcount, int trblockcount, double *trd
         double dist1, dist2;
         double tmp1, tmp2;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                tbcU = tbc & ~0x01;
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
-                        datum, tmp1, tmp2)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbcU;  tn += 2)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        tbcU = tbc & ~0x01;
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti1, ti2, dist1, dist2, d, \
+                                datum, tmp1, tmp2)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti1 = tn * dimensions;
-                                ti2 = (tn + 1) * dimensions;
-                                dist1 = dist2 = 0.0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbcU;  tn += 2)
                                 {
-                                        datum = data[i + d];
-                                        tmp1 = datum - trdata[ti1 + d];
-                                        tmp2 = datum - trdata[ti2 + d];
-                                        dist1 += tmp1 * tmp1;
-                                        dist2 += tmp2 * tmp2;
+                                        ti1 = tn * dimensions;
+                                        ti2 = (tn + 1) * dimensions;
+                                        dist1 = dist2 = 0.0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                datum = data[i + d];
+                                                tmp1 = datum - trdata[ti1 + d];
+                                                tmp2 = datum - trdata[ti2 + d];
+                                                dist1 += tmp1 * tmp1;
+                                                dist2 += tmp2 * tmp2;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
+                                        if (dist2 < min_distance)
+                                        {
+                                                min_distance = dist2;
+                                                cl = trklass[tn + 1];
+                                                idx = tn + 1;
+                                        }
                                 }
-                                if (dist1 < min_distance)
+                                for (;  tn < tbc;  tn++)
                                 {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
+                                        ti1 = tn * dimensions;
+                                        dist1 = 0.0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp1 = data[i + d] - trdata[ti1 + d];
+                                                dist1 += tmp1 * tmp1;
+                                        }
+                                        if (dist1 < min_distance)
+                                        {
+                                                min_distance = dist1;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist2 < min_distance)
-                                {
-                                        min_distance = dist2;
-                                        cl = trklass[tn + 1];
-                                        idx = tn + 1;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        for (;  tn < tbc;  tn++)
-                        {
-                                ti1 = tn * dimensions;
-                                dist1 = 0.0;
-                                for (d = 0;  d < dimensions;  d++)
-                                {
-                                        tmp1 = data[i + d] - trdata[ti1 + d];
-                                        dist1 += tmp1 * tmp1;
-                                }
-                                if (dist1 < min_distance)
-                                {
-                                        min_distance = dist1;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
-                        }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }

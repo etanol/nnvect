@@ -12,9 +12,10 @@
 
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "b:hk:o:r:st:";
+static char OptString[] = "B:b:hk:o:r:st:";
 
 static struct option LongOpts[] = {
+        { "superblock", required_argument, NULL, 'B' },
         { "blocksize",  required_argument, NULL, 'b' },
         { "help",       no_argument,       NULL, 'h' },
         { "neighbours", required_argument, NULL, 'k' },
@@ -31,10 +32,12 @@ static void usage (const char *progname)
         fprintf(stderr,
 "Usage: %s [options] dbfile\n\n"
 "Where possible options are:\n\n"
-"    -b, --blocksize=SIZE  The maximum amount of bytes to read from the\n"
-"                          training array at once.  Setting this value to\n"
-"                          zero (the default) forces a non-blocking\n"
-"                          implementation.\n\n"
+"    -B, --superblock=SIZE The maximum amount of bytes to read from the\n"
+"                          test array at once.  Setting this value to zero\n"
+"                          disables blocking at this level.\n\n"
+"    -b, --blocksize=SIZE  Same as \"-B\" or \"--superblock\" but applied\n"
+"                          for the training array.  Using any of the block\n"
+"                          size options swithes to a blocking implementation.\n\n"
 "    -h, --help            This help.\n\n"
 "    -k, --neighbours=K    Classify according to the K nearest neighbors.\n"
 "                          Setting this value to a number greater than 1\n"
@@ -89,7 +92,7 @@ int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
         int cmdopt, has_opts, want_scalar, r, runs, i, hits, k;
-        int block_limit;
+        int block_limit, test_block_limit;
         int *original;
         enum valuetype type;
         struct db *db, *train_db;
@@ -99,6 +102,7 @@ int main (int argc, char **argv)
         progname = argv[0];
         dumpfile = NULL;
         block_limit = 0;
+        test_block_limit = 0;
         runs = 3;
         type = FLOAT;
         typelabel = NULL;
@@ -106,6 +110,7 @@ int main (int argc, char **argv)
         want_scalar = 0;
         has_opts = 1;
         k = 1;
+        nbh = NULL;
 
         while (has_opts)
         {
@@ -114,6 +119,14 @@ int main (int argc, char **argv)
                 {
                 case -1:
                         has_opts = 0;
+                        break;
+                case 'B':
+                        test_block_limit = atoi(optarg);
+                        if (test_block_limit < 0)
+                        {
+                                test_block_limit = 0;
+                                warning("Invalied superblock: %s", optarg);
+                        }
                         break;
                 case 'b':
                         block_limit = atoi(optarg);
@@ -212,7 +225,8 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(fullname, type, 0, !want_scalar, train_db->block_items > 0);
+        db = load_db(fullname, type, test_block_limit, !want_scalar,
+                     train_db->block_items > 0);
         free(fullname);
         print_db_info(db);
         printf("\n");

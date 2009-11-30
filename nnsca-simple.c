@@ -225,139 +225,153 @@ void nn_double_sca_U (int dimensions, int trcount, double *trdata, int *trklass,
 /******************************  INTEGER VALUES  ******************************/
 
 void nn_byte_sca_B (int dimensions, int trcount, int trblockcount, char *trdata,
-                    int *trklass, int count, char *data, int *klass,
-                    unsigned int *distance)
+                    int *trklass, int count, int blockcount, char *data,
+                    int *klass, unsigned int *distance)
 {
-        int tbc, tbn;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int cl, d, idx;
         unsigned int min_distance, dist;
         char tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti, dist, d, tmp)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < min_distance)
+                                        {
+                                                min_distance = dist;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist < min_distance)
-                                {
-                                        min_distance = dist;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
 
 
 void nn_short_sca_B (int dimensions, int trcount, int trblockcount, short *trdata,
-                     int *trklass, int count, short *data, int *klass,
-                     unsigned int *distance)
-
+                     int *trklass, int count, int blockcount, short *data,
+                     int *klass, unsigned int *distance)
 {
-        int tbc, tbn;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int cl, d, idx;
         unsigned int min_distance, dist;
         short tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti, dist, d, tmp)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < min_distance)
+                                        {
+                                                min_distance = dist;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist < min_distance)
-                                {
-                                        min_distance = dist;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
 
 
 void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
-                   int *trklass, int count, int *data, int *klass,
-                   unsigned int *distance)
+                   int *trklass, int count, int blockcount, int *data,
+                   int *klass, unsigned int *distance)
 {
-        int tbc, tbn;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int cl, d, idx;
         unsigned int min_distance, dist;
         int tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti, dist, d, tmp)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
+                                        ti = tn * dimensions;
+                                        dist = 0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < min_distance)
+                                        {
+                                                min_distance = dist;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist < min_distance)
-                                {
-                                        min_distance = dist;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
@@ -366,92 +380,102 @@ void nn_int_sca_B (int dimensions, int trcount, int trblockcount, int *trdata,
 /**************************  FLOATING POINT VALUES  **************************/
 
 void nn_float_sca_B (int dimensions, int trcount, int trblockcount, float *trdata,
-                     int *trklass, int count, float *data, int *klass,
-                     float *distance)
+                     int *trklass, int count, int blockcount, float *data,
+                     int *klass, float *distance)
 {
-        int tbn, tbc;
+        int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
         int cl, d, idx;
         float min_distance, dist;
         float tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti, dist, d, tmp)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0.0f;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
+                                        ti = tn * dimensions;
+                                        dist = 0.0f;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < min_distance)
+                                        {
+                                                min_distance = dist;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist < min_distance)
-                                {
-                                        min_distance = dist;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
 
 
 void nn_double_sca_B (int dimensions, int trcount, int trblockcount, double *trdata,
-                      int *trklass, int count, double *data, int *klass,
-                      double *distance)
+                      int *trklass, int count, int blockcount, double *data,
+                      int *klass, double *distance)
 {
-        int tbc, tbn;
+        int bn, bc, tbc, tbn;
         int n, tn;
         int i, ti;
         int cl, d, idx;
         double min_distance, dist;
         double tmp;
 
-        for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
+        for (bn = 0;  bn < count;  bn += blockcount)
         {
-                tbc = (tbn + trblockcount < trcount ?
-                       tbn + trblockcount : trcount);
-                #pragma omp parallel for schedule(static) private(i, \
-                        min_distance, cl, idx, tn, ti, dist, d, tmp)
-                for (n = 0;  n < count;  n++)
+                bc = (bn + blockcount < count ?
+                      bn + blockcount : count);
+                for (tbn = 0;  tbn < trcount;  tbn += trblockcount)
                 {
-                        i = n * dimensions;
-                        min_distance = distance[n];
-                        cl = klass[n];
-                        idx = -1;
-                        for (tn = tbn;  tn < tbc;  tn++)
+                        tbc = (tbn + trblockcount < trcount ?
+                               tbn + trblockcount : trcount);
+                        #pragma omp parallel for schedule(static) private(i, \
+                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                        for (n = bn;  n < bc;  n++)
                         {
-                                ti = tn * dimensions;
-                                dist = 0.0;
-                                for (d = 0;  d < dimensions;  d++)
+                                i = n * dimensions;
+                                min_distance = distance[n];
+                                cl = klass[n];
+                                idx = -1;
+                                for (tn = tbn;  tn < tbc;  tn++)
                                 {
-                                        tmp = data[i + d] - trdata[ti + d];
-                                        dist += tmp * tmp;
+                                        ti = tn * dimensions;
+                                        dist = 0.0;
+                                        for (d = 0;  d < dimensions;  d++)
+                                        {
+                                                tmp = data[i + d] - trdata[ti + d];
+                                                dist += tmp * tmp;
+                                        }
+                                        if (dist < min_distance)
+                                        {
+                                                min_distance = dist;
+                                                cl = trklass[tn];
+                                                idx = tn;
+                                        }
                                 }
-                                if (dist < min_distance)
-                                {
-                                        min_distance = dist;
-                                        cl = trklass[tn];
-                                        idx = tn;
-                                }
+                                distance[n] = min_distance;
+                                klass[n] = cl;
                         }
-                        distance[n] = min_distance;
-                        klass[n] = cl;
                 }
         }
 }
