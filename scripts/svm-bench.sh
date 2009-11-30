@@ -1,37 +1,40 @@
 #!/bin/sh
 
-P=`dirname $0`/..
-test -d $P/svm-outputs || mkdir $P/svm-outputs
-
-svm_train="$P/libsvm-2.9/svm-train"
-svm_predict="$P/libsvm-2.9/svm-predict"
+. ./paths.sh
+ensure_path $svm_outputs
+libsvm='../libsvm-2.9'
 ram_dir='/dev/shm'
 
-files=`ls $P/sample_svm_data/*.tst | sed 's/\.tst$//'`
-
-
-for f in $files
+for file in $svm_inputs/*.tst
 do
-    test -f $f.params || continue
-    set - `cat $f.params`
-    c=$1
-    g=$2
-
-    bf=`basename $f`
+    f=${file%.tst}
+    c=
+    g=
+    if [ -f $f.params ]
+    then
+        set - $(cat $f.params)
+        c=$1
+        g=$2
+    fi
+    bf=${f#$svm_inputs/}
     rf=$ram_dir/$bf
-    output=$P/svm-outputs/$bf
-    test -f $output && continue
+    output=$svm_outputs/$bf
+
+    if [ -f $output ]
+    then
+        continue
+    fi
 
     cp $f.trn $rf.trn
     cp $f.tst $rf.tst
 
     echo "--> $bf training"
     echo '=== TRAINING ===' > $output
-    $svm_train -c $c -g $g $rf.trn $rf.model 2>/dev/null >> $output
+    $libsvm/svm-train ${c:+-c} $c ${g:+-g} $g $rf.trn $rf.model 2>/dev/null >> $output
 
     echo "--> $bf prediction"
     echo '=== PREDICTION ===' >> $output
-    $svm_predict $rf.tst $rf.model /dev/null 2>/dev/null >> $output
+    $libsvm/svm-predict $rf.tst $rf.model /dev/null 2>/dev/null >> $output
 
     rm -f $rf.*
 done
