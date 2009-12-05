@@ -17,5 +17,6 @@ set grid y
 set title plot_title
 set output plot_output.".png"
 
-plot plot_data u ($2/(2**20)):xtic(1) t "Training data", '' u ($3/(2**20)) t "Test data"
+plot plot_data u ($2/(2**20)):xtic(1) t "Training data" lt 2, \
+     '' u ($3/(2**20)) t "Test data" lt 1
 

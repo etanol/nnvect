@@ -14,30 +14,31 @@ set ytics mirror
 set ylabel "Time (seconds)"
 set grid y
 
-set title plot_title." (I)"
-set output plot_output."-1.png"
-
-plot plot_data u 2:xtic(1) t "Scalar simple", '' u 3 t "Scalar unroll 2", \
-         '' u 4 t "Scalar unroll 4", '' u 5 t "Vectorized simple", \
-         '' u 6 t "Vectorized unroll 2", '' u 7 t "Vectorized unroll 4"
-
-set title plot_title." (II)"
-set output plot_output."-2.png"
-
-plot newhistogram "Simple", \
-         plot_data u 2:xtic(1) t "Scalar", '' u 5 t "Vectorized", \
-     newhistogram "Unroll 2", \
-         plot_data u 3:xtic(1) lt 1, '' u 6 lt 2, \
-     newhistogram "Unroll 4", \
-         plot_data u 4:xtic(1) lt 1, '' u 7 lt 2
-
-
-set title plot_title." (III)"
-set output plot_output."-3.png"
-
+set output plot_output."-b.png"
+set title plot_title." 2-level blocking"
 plot newhistogram "Scalar", \
-         plot_data u 2:xtic(1) t "Simple", '' u 3 t "Unroll 2", \
-         '' u 4 t "Unroll 4", \
+         plot_data u 4:xtic(1) t "Simple", '' u 7 t "Unroll 2", \
+         '' u 10 t "Unroll 4", \
      newhistogram "Vectorized", \
-         plot_data u 5:xtic(1) lt 1, '' u 6 lt 2, '' u 7 lt 3
+         plot_data u 13:xtic(1) lt 1, '' u 16 lt 2, '' u 19 lt 3
+
+set output plot_output."-s.png"
+set title plot_title." scalar"
+plot newhistogram "Blocking 0", \
+         plot_data u 2:xtic(1) t "Simple", '' u 5 t "Unroll 2", \
+         '' u 8 t "Unroll 4", \
+     newhistogram "Blocking 1", \
+         plot_data u 3:xtic(1) lt 1, '' u 6 lt 2, '' u 9 lt 3, \
+     newhistogram "Blocking 2", \
+         plot_data u 4:xtic(1) lt 1, '' u 7 lt 2, '' u 10 lt 3
+
+set output plot_output."-v.png"
+set title plot_title." vectorized"
+plot newhistogram "Blocking 0", \
+         plot_data u 11:xtic(1) t "Simple", '' u 14 t "Unroll 2", \
+         '' u 17 t "Unroll 4", \
+     newhistogram "Blocking 1", \
+         plot_data u 12:xtic(1) lt 1, '' u 15 lt 2, '' u 18 lt 3, \
+     newhistogram "Blocking 2", \
+         plot_data u 13:xtic(1) lt 1, '' u 16 lt 2, '' u 19 lt 3
 

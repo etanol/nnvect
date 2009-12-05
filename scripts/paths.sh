@@ -9,11 +9,7 @@ knn_outputs=$output_base/knn
 svm_outputs=$output_base/svm
 lin_outputs=$output_base/linear
 
-plot_base=../plots
-nn_plots=$plot_base/nn
-knn_plots=$plot_base/knn
-svm_plots=$plot_base/svm
-lin_plots=$plot_base/linear
+plots=../plots
 
 
 ensure_path()

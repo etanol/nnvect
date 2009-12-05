@@ -1,61 +1,74 @@
 #!/bin/sh
 
-P=`dirname $0`/..
-for d in sizes times mflops scales
+. ./paths.sh
+
+#
+# AWK scripts
+#
+HAS_FLOATS='$1 == "floats" { print $2 }'
+NN_SIZE='/^ +Data array is/ { printf "  %d", $4 }'
+NN_TIME='/^- Minimum/ { printf $4 }'
+NN_MOPS='/^- Minimum/ { printf substr($6, 2) }'
+SVM_TIMES='/^TRAINING TIME:/ { train = $3 }
+           /^PREDICT TIME:/  { predict = $3 }
+           END { printf "%f  %f", predict, train }'
+
+#
+# Parameters: {plot_script} {title} {input} {output}
+do_plot()
+{
+    gnuplot - $1 >/dev/null 2>&1 <<EOP
+        plot_title  = "$2"
+        plot_data   = "$3"
+        plot_output = "$4"
+EOP
+}
+
+ensure_path $plots
+for d in sizes times mflops scales comptimes comptimes2
 do
-    test -d $P/plots/$d || mkdir -p $P/plots/$d
+    ensure_path $plots/$d
 done
 
-if [ -f $P/scripts/datafiles ]
-then
-    . $P/scripts/datafiles
-else
-    files=`ls $P/sample_nn_data/*.tst | sed 's/\.tst$//'`
-fi
 
-for f in $files
+for file in $nn_inputs/*.tst
 do
-    has_floats=`awk '$1 == "floats" { print $2 }' $f.tst.info`
+    f=${file%.tst}
+    bf=${f#$nn_inputs/}
+    has_floats=$(awk "$HAS_FLOATS" $f.tst.info)
     if [ $has_floats = yes ]
     then
         types='float double'
+        tk='float'
     else
         types='byte short int float double'
+        tk='byte'
     fi
-
-    title=`basename $f`
-    printf '=> %-16s  ...  ' $title
 
     #
     # Plot sizes
     #
-    data=$P/plots/sizes/table-$title.txt
+    printf "  $bf sizes ... "
+    data=$plots/sizes/table-$bf.txt
     for t in $types
     do
-        input=$P/outputs/$title-simple-vec-$t-1
+        input=$nn_outputs/$bf-unroll4-vec-$t-b2-1
         if [ -f $input ]
         then
-            values=`awk '/^ +Data array is/ { printf "  " $4 }' $input`
+            values=$(awk "$NN_SIZE" $input)
         else
-            values='- -'
+            values='  -  -'
         fi
         echo "$t$values"
     done >$data
-    gnuplot - $P/scripts/sizes.gpi >/dev/null 2>&1 <<EOP
-        plot_title  = "$title"
-        plot_output = "$P/plots/sizes/$title"
-        plot_data   = "$data"
-EOP
-    if [ $? -ne 0 ]
-    then
-        printf '!'
-    fi
-    printf 'sizes  '
+    do_plot sizes.gpi $bf $data $plots/sizes/$bf
+    echo done
 
     #
     # Plot times
     #
-    data=$P/plots/times/table-$title.txt
+    printf "  $bf times ... "
+    data=$plots/times/table-$bf.txt
     for t in $types
     do
         line="$t"
@@ -63,67 +76,59 @@ EOP
         do
             for impl in simple unroll2 unroll4
             do
-                input=$P/outputs/$title-$impl-$mode-$t-1
-                if [ -f $input ]
-                then
-                    time=`awk '$2 == "Minimum" { print $4 }' $input`
-                else
-                    time='-'
-                fi
-                line="$line  $time"
+                for block in 0 1 2
+                do
+                    input=$nn_outputs/$bf-$impl-$mode-$t-b$block-1
+                    if [ -f $input ]
+                    then
+                        time=$(awk "$NN_TIME" $input)
+                    else
+                        time='-'
+                    fi
+                    line="$line  $time"
+                done
             done
         done
         echo "$line"
     done >$data
-    gnuplot - $P/scripts/times.gpi >/dev/null 2>&1 <<EOP
-        plot_title  = "$title"
-        plot_output = "$P/plots/times/$title"
-        plot_data   = "$data"
-EOP
-    if [ $? -ne 0 ]
-    then
-        printf '!'
-    fi
-    printf 'times  '
+    do_plot times.gpi $bf $data $plots/times/$bf
+    echo done
 
     #
     # Plot MFLOPS
     #
-    data=$P/plots/mflops/table-$title.txt
+    printf "  $bf mflops ... "
+    data=$plots/mflops/table-$bf.txt
     for t in $types
     do
-    line="$t"
+        line="$t"
         for mode in sca vec
         do
             for impl in simple unroll2 unroll4
             do
-                input=$P/outputs/$title-$impl-$mode-$t-1
-                if [ -f $input ]
-                then
-                    mflops=`awk '$2 == "Minimum" { print substr($6, 2) }' $input`
-                else
-                    mflops='-'
-                fi
-                line="$line  $mflops"
+                for block in 0 1 2
+                do
+                    input=$nn_outputs/$bf-$impl-$mode-$t-b$block-1
+                    if [ -f $input ]
+                    then
+                        mflops=$(awk "$NN_MOPS" $input)
+                    else
+                        mflops='-'
+                    fi
+                    line="$line  $mflops"
+                done
             done
         done
         echo "$line"
     done >$data
-    gnuplot - $P/scripts/mflops.gpi >/dev/null 2>&1 <<EOP
-        plot_title  = "$title"
-        plot_output = "$P/plots/mflops/$title"
-        plot_data   = "$data"
-EOP
-    if [ $? -ne 0 ]
-    then
-        printf '!'
-    fi
-    printf 'mflops  '
+    do_plot mflops.gpi $bf $data $plots/mflops/$bf
+    echo done
 
     #
     # Plot scalability
     #
-    data=$P/plots/scales/table-$title.txt
+    printf "  $bf scalability ... "
+    data=$plots/scales/table-$bf.txt
     for threads in 1 2 3 4 5 6 7 8
     do
         line=''
@@ -133,10 +138,10 @@ EOP
             do
                 for impl in simple unroll2 unroll4
                 do
-                    input=$P/outputs/$title-$impl-$mode-$t-$threads
+                    input=$nn_outputs/$bf-$impl-$mode-$t-b1-$threads
                     if [ -f $input ]
                     then
-                        time=`awk '$2 == "Minimum" { print $4 }' $input`
+                        time=$(awk "$NN_TIME" $input)
                     else
                         time='-'
                     fi
@@ -163,16 +168,43 @@ EOP
                         else
                             printf "  %f", base[i] / $i
                     printf "\n"
-                }' >$data.txt
-    gnuplot - $P/scripts/scales.gpi >/dev/null 2>&1 <<EOP
-        plot_title  = "$title"
-        plot_output = "$P/plots/scales/$title"
-        plot_data   = "$data"
-EOP
-    if [ $? -ne 0 ]
-    then
-        printf '!'
-    fi
-    printf "scales\n"
+                }' >$data
+    do_plot scales.gpi $bf $data $plots/scales/$bf
+    echo done
+
+    #
+    # Plot time comparisons
+    #
+    printf "  $bf time comparisons ... "
+    for t in $types
+    do
+        in_svm=$svm_outputs/${bf%.scale}.scale
+        in_lin=$lin_outputs/$bf
+        in_worst=$nn_outputs/$bf-simple-sca-$t-b0-1
+        in_best=$nn_outputs/$bf-unroll4-vec-$t-b2-1
+        svm='-  -'
+        lin='-  -'
+        worst='-'
+        best='-'
+        test -f $in_svm && svm=$(awk "$SVM_TIMES" $in_svm)
+        test -f $in_lin && lin=$(awk "$SVM_TIMES" $in_lin)
+        test -f $in_worst && worst=$(awk "$NN_TIMES" $in_worst)
+        test -f $in_best && best=$(awk "$NN_TIMES" $in_best)
+        data=$plots/comptimes/table-$bf-$t.txt
+        {
+            echo "LibSVM  $svm"
+            echo "LibLINEAR  $lin"
+            echo "NN-worst  $worst  -"
+            echo "NN-best  $best  -"
+        } >$data
+        do_plot comptimes.gpi "$bf ($t)" $data $plots/comptimes/$bf-$t
+        data=$plots/comptimes2/table-$bf-$t.txt
+        {
+            echo "LibLINEAR  $lin"
+            echo "NN-best  $best  -"
+        } >$data
+        do_plot comptimes.gpi "$bf ($t)" $data $plots/comptimes2/$bf-$t
+    done
+    echo done
 done
 
