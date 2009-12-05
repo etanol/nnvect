@@ -12,7 +12,7 @@ then
         echo
         echo Available governors are:
         echo
-        for gov in `cat $sys/cpu0/cpufreq/scaling_available_governors`
+        for gov in $(cat $sys/cpu0/cpufreq/scaling_available_governors)
         do
             echo "    $gov"
         done
@@ -26,8 +26,8 @@ then
 else
     for cpu in $sys/cpu?
     do
-        gov=`cat $cpu/cpufreq/scaling_governor`
-        echo `basename $cpu`: $gov
+        gov=$(cat $cpu/cpufreq/scaling_governor)
+        echo $(basename $cpu): $gov
     done
 fi
 
