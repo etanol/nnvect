@@ -1,3 +1,5 @@
+MAKEFLAGS += -R -r
+
                      #####################################
                      #                                   #
                      #  Automatic build rule generation  #

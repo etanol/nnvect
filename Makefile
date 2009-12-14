@@ -1,4 +1,3 @@
-MAKEFLAGS += -R -r
 CFLAGS    ?= -O3 -fopenmp -fomit-frame-pointer -msse4.1
 LDFLAGS   += -lm -fopenmp
 
