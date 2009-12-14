@@ -40,7 +40,7 @@ void print_message (const char *file, int line, int severity,
         vfprintf(stderr, message, args);
         va_end(args);
 
-        if (errmsg[0] != '\0')
+        if (errno != 0 && errmsg[0] != '\0')
                 fprintf(stderr, ": %s", errmsg);
         fputs(".\n", stderr);
 
