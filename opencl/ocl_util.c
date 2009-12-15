@@ -1,9 +1,5 @@
 #include "ocl_util.h"
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
@@ -154,87 +150,5 @@ void *allocate_memory (const char *file, int line, size_t bytes)
                 print_message(file, line, 4, "Unable to allocate %ld bytes",
                               bytes);
         return mem;
-}
-
-
-cl_device_id ocl_available_device (cl_context ctx)
-{
-        cl_device_id *device, ret;
-        cl_int e, id;
-        cl_bool available;
-        size_t sz;
-        int dev_count;
-
-        e = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, 0, NULL, &sz);
-        if (e != CL_SUCCESS)
-                ocl_error(e, "Listing context devices");
-        device = xmalloc(sz);
-        e = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, sz, device, NULL);
-        if (e != CL_SUCCESS)
-        {
-                free(device);
-                ocl_error(e, "Listing context devices");
-                return NULL;
-        }
-
-        dev_count = sz / sizeof(cl_device_id);
-        ret = NULL;
-        for (id = 0;  id < dev_count;  id++)
-        {
-
-                e = clGetDeviceInfo(device[id], CL_DEVICE_AVAILABLE,
-                                    sizeof(cl_bool), &available, NULL);
-                if (e != CL_SUCCESS)
-                        ocl_error(e, "Querying device %d", id);
-                else
-                        if (available == CL_TRUE)
-                        {
-                                ret = device[id];
-                                break;
-                        }
-        }
-
-        free(device);
-        return ret;
-}
-
-
-cl_program ocl_make_program (cl_context ctx, cl_device_id dev, const char *file)
-{
-        struct stat st;
-        char *data;
-        size_t filesize;
-        int e, fd;
-        cl_program prog;
-        cl_int cle;
-
-        fd = open(file, O_RDONLY);
-        if (fd == -1)
-                fatal("Could not open '%s'", file);
-        e = fstat(fd, &st);
-        if (e == -1)
-                fatal("Could not stat '%s'", file);
-        data = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (data == MAP_FAILED)
-                fatal("Could not map '%s'", file);
-
-        filesize = (size_t) st.st_size;
-        prog = clCreateProgramWithSource(ctx, 1, (const char **) &data,
-                                         &filesize, &cle);
-        if (cle != CL_SUCCESS)
-                ocl_fatal(cle, "Could not create program");
-        cle = clBuildProgram(prog, 1, &dev, NULL, NULL, NULL);
-        if (cle != CL_SUCCESS)
-                ocl_fatal(cle, "Could not build program");
-        clUnloadCompiler();
-
-        e = munmap(data, st.st_size);
-        if (e == -1)
-                error("Unmpaaing file '%s'", file);
-        e = close(fd);
-        if (e == -1)
-                error("Closing file '%s'", file);
-
-        return prog;
 }
 

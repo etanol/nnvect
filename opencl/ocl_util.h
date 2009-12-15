@@ -18,9 +18,6 @@
 #define xmalloc(s)     allocate_memory(__FILE__, __LINE__, (s))
 #define xstrcat(a, b)  string_concat(__FILE__, __LINE__, (a), (b))
 
-cl_device_id ocl_available_device (cl_context);
-cl_program   ocl_make_program     (cl_context, cl_device_id, const char *);
-
 
 /* Do not call these functions directly, use the macro interface instead */
 void  print_message   (const char *, int, int, const char *, ...);
