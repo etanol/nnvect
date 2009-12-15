@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/cl.h>
-#include "util.h"
+#include "ocl_util.h"
 
 #define oclCheckError(var) \
         do { \
@@ -19,14 +19,16 @@
 static void oclPrintPlatformInfoString (cl_platform_id plat, cl_platform_info param, char *label)
 {
         char *s;
-        int e;
+        cl_int e;
         size_t b;
 
         e = clGetPlatformInfo(plat, param, 0, NULL, &b);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying platform string length for \"%s\"", label);
         s = xmalloc(b);
         e = clGetPlatformInfo(plat, param, b, s, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying platform string for \"%s\"", label);
         printf("   %-10s: %s\n", label, s);
         free(s);
 }
@@ -35,14 +37,16 @@ static void oclPrintPlatformInfoString (cl_platform_id plat, cl_platform_info pa
 static void oclPrintDeviceInfoString (cl_device_id dev, cl_device_info param, char *label)
 {
         char *s;
-        int e;
+        cl_int e;
         size_t b;
 
         e = clGetDeviceInfo(dev, param, 0, NULL, &b);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying device string length for \"%s\"", label);
         s = xmalloc(b);
         e = clGetDeviceInfo(dev, param, b, s, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying device string for \"%s\"", label);
         printf("      %*s: %s\n", LABEL_PAD, label, s);
         free(s);
 }
@@ -51,10 +55,11 @@ static void oclPrintDeviceInfoString (cl_device_id dev, cl_device_info param, ch
 static void oclPrintDeviceInfoBool (cl_device_id dev, cl_device_info param, char *label)
 {
         cl_bool b;
-        int e;
+        cl_int e;
 
         e = clGetDeviceInfo(dev, param, sizeof(cl_bool), &b, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying device boolean for \"%s\"", label);
         printf("      %*s: %s\n", LABEL_PAD, label, (b == CL_TRUE ? "yes" : "no"));
 }
 
@@ -62,10 +67,11 @@ static void oclPrintDeviceInfoBool (cl_device_id dev, cl_device_info param, char
 static void oclPrintDeviceInfoInt (cl_device_id dev, cl_device_info param, char *label)
 {
         cl_uint n;
-        int e;
+        cl_int e;
 
         e = clGetDeviceInfo(dev, param, sizeof(cl_uint), &n, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying device integer for \"%s\"", label);
         printf("      %*s: %u\n", LABEL_PAD, label, n);
 }
 
@@ -73,10 +79,11 @@ static void oclPrintDeviceInfoInt (cl_device_id dev, cl_device_info param, char 
 static void oclPrintDeviceInfoLong (cl_device_id dev, cl_device_info param, char *label)
 {
         cl_ulong n;
-        int e;
+        cl_int e;
 
         e = clGetDeviceInfo(dev, param, sizeof(cl_ulong), &n, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Querying device long integer for \"%s\"", label);
         printf("      %*s: %lu\n", LABEL_PAD, label, n);
 }
 
@@ -91,10 +98,12 @@ int main ()
         size_t *dims;
 
         e = clGetPlatformIDs(0, NULL, &plat_count);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Listing platform IDs");
         platforms = xmalloc(plat_count * sizeof(cl_platform_id));
         e = clGetPlatformIDs(plat_count, platforms, NULL);
-        oclCheckError(e);
+        if (e != CL_SUCCESS)
+                ocl_fatal(e, "Listing platform IDs");
         printf("%d platforms found:\n\n", plat_count);
         for (p = 0;  p < plat_count;  p++)
         {
@@ -106,10 +115,12 @@ int main ()
                 printf("\n");
 
                 e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, 0, NULL, &device_count);
-                oclCheckError(e);
+                if (e != CL_SUCCESS)
+                        ocl_fatal(e, "Listing device IDs for platform %d", p);
                 devices = xmalloc(device_count * sizeof(cl_device_id));
                 e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, device_count, devices, NULL);
-                oclCheckError(e);
+                if (e != CL_SUCCESS)
+                        ocl_fatal(e, "Listing device IDs for platform %d", p);
                 printf("   %d GPU devices found:\n\n", device_count);
 
                 for (i = 0;  i < device_count;  i++)
@@ -147,10 +158,13 @@ int main ()
                         oclPrintDeviceInfoInt(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, "Work item dimensions");
 
                         e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &widim, NULL);
-                        oclCheckError(e);
+                        if (e != CL_SUCCESS)
+                                ocl_fatal(e, "Getting work item dimensions");
                         printf("      %*s: [ ", LABEL_PAD, "Work group volume");
                         dims = xmalloc(sizeof(size_t) * widim);
                         e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * widim, dims, NULL);
+                        if (e != CL_SUCCESS)
+                                ocl_fatal(e, "Getting work item sizes");
                         for (j = 0;  j < widim;  j++)
                         {
                                 printf("%lu ", dims[j]);
