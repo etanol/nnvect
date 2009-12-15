@@ -1,4 +1,4 @@
-#include "ocl_util.h"
+#include "util.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>

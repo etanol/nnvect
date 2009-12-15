@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/cl.h>
-#include "ocl_util.h"
+#include "util.h"
 
 #define oclCheckError(var) \
         do { \
