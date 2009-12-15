@@ -4,15 +4,6 @@
 #include <CL/cl.h>
 #include "util.h"
 
-#define oclCheckError(var) \
-        do { \
-                if ((var) != CL_SUCCESS) \
-                { \
-                        errno = 0; \
-                        fatal("In OpenCL call, error code %d", (var)); \
-                } \
-        } while (0)
-
 #define LABEL_PAD -22
 
 
