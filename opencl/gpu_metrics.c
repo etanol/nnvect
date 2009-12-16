@@ -13,13 +13,9 @@ static void oclPrintPlatformInfoString (cl_platform_id plat, cl_platform_info pa
         cl_int e;
         size_t b;
 
-        e = clGetPlatformInfo(plat, param, 0, NULL, &b);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying platform string length for \"%s\"", label);
+        e = clGetPlatformInfo(plat, param, 0, NULL, &b);  ocl_assert(e);
         s = xmalloc(b);
-        e = clGetPlatformInfo(plat, param, b, s, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying platform string for \"%s\"", label);
+        e = clGetPlatformInfo(plat, param, b, s, NULL);  ocl_assert(e);
         printf("   %-10s: %s\n", label, s);
         free(s);
 }
@@ -31,13 +27,9 @@ static void oclPrintDeviceInfoString (cl_device_id dev, cl_device_info param, ch
         cl_int e;
         size_t b;
 
-        e = clGetDeviceInfo(dev, param, 0, NULL, &b);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying device string length for \"%s\"", label);
+        e = clGetDeviceInfo(dev, param, 0, NULL, &b);  ocl_assert(e);
         s = xmalloc(b);
-        e = clGetDeviceInfo(dev, param, b, s, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying device string for \"%s\"", label);
+        e = clGetDeviceInfo(dev, param, b, s, NULL);  ocl_assert(e);
         printf("      %*s: %s\n", LABEL_PAD, label, s);
         free(s);
 }
@@ -48,9 +40,7 @@ static void oclPrintDeviceInfoBool (cl_device_id dev, cl_device_info param, char
         cl_bool b;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_bool), &b, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying device boolean for \"%s\"", label);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_bool), &b, NULL);  ocl_assert(e);
         printf("      %*s: %s\n", LABEL_PAD, label, (b == CL_TRUE ? "yes" : "no"));
 }
 
@@ -60,9 +50,7 @@ static void oclPrintDeviceInfoInt (cl_device_id dev, cl_device_info param, char 
         cl_uint n;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_uint), &n, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying device integer for \"%s\"", label);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_uint), &n, NULL);  ocl_assert(e);
         printf("      %*s: %u\n", LABEL_PAD, label, n);
 }
 
@@ -72,9 +60,7 @@ static void oclPrintDeviceInfoLong (cl_device_id dev, cl_device_info param, char
         cl_ulong n;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_ulong), &n, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Querying device long integer for \"%s\"", label);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_ulong), &n, NULL);  ocl_assert(e);
         printf("      %*s: %lu\n", LABEL_PAD, label, n);
 }
 
@@ -88,13 +74,9 @@ int main ()
         int p, i, j;
         size_t *dims;
 
-        e = clGetPlatformIDs(0, NULL, &plat_count);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Listing platform IDs");
+        e = clGetPlatformIDs(0, NULL, &plat_count);  ocl_assert(e);
         platforms = xmalloc(plat_count * sizeof(cl_platform_id));
-        e = clGetPlatformIDs(plat_count, platforms, NULL);
-        if (e != CL_SUCCESS)
-                ocl_fatal(e, "Listing platform IDs");
+        e = clGetPlatformIDs(plat_count, platforms, NULL);  ocl_assert(e);
         printf("%d platforms found:\n\n", plat_count);
         for (p = 0;  p < plat_count;  p++)
         {
@@ -105,13 +87,11 @@ int main ()
                 oclPrintPlatformInfoString(platforms[p], CL_PLATFORM_EXTENSIONS, "Extensions");
                 printf("\n");
 
-                e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, 0, NULL, &device_count);
-                if (e != CL_SUCCESS)
-                        ocl_fatal(e, "Listing device IDs for platform %d", p);
+                e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, 0, NULL,
+                                   &device_count);  ocl_assert(e);
                 devices = xmalloc(device_count * sizeof(cl_device_id));
-                e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, device_count, devices, NULL);
-                if (e != CL_SUCCESS)
-                        ocl_fatal(e, "Listing device IDs for platform %d", p);
+                e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL,
+                                   device_count, devices, NULL);  ocl_assert(e);
                 printf("   %d GPU devices found:\n\n", device_count);
 
                 for (i = 0;  i < device_count;  i++)
@@ -148,19 +128,14 @@ int main ()
                         oclPrintDeviceInfoLong(devices[i], CL_DEVICE_MAX_WORK_GROUP_SIZE, "Work group size");
                         oclPrintDeviceInfoInt(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, "Work item dimensions");
 
-                        e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &widim, NULL);
-                        if (e != CL_SUCCESS)
-                                ocl_fatal(e, "Getting work item dimensions");
+                        e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                                            sizeof(cl_uint), &widim, NULL);  ocl_assert(e);
                         printf("      %*s: [ ", LABEL_PAD, "Work group volume");
                         dims = xmalloc(sizeof(size_t) * widim);
-                        e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * widim, dims, NULL);
-                        if (e != CL_SUCCESS)
-                                ocl_fatal(e, "Getting work item sizes");
+                        e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_SIZES,
+                                            sizeof(size_t) * widim, dims, NULL);  ocl_assert(e);
                         for (j = 0;  j < widim;  j++)
-                        {
                                 printf("%lu ", dims[j]);
-
-                        }
                         printf("]\n");
                         free(dims);
 

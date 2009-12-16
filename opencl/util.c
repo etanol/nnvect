@@ -120,24 +120,13 @@ void print_message (const char *file, int line, int severity,
 }
 
 
-void ocl_print_error (const char *file, int line, cl_int code, int is_fatal,
-                      const char *message, ...)
+void ocl_print_error (const char *file, int line, cl_int code, const char *label)
 {
-        va_list args;
-        char *label;
         int errcode;
 
         errcode = (code > 0 ? 63 : (int) -code);
-        label = (is_fatal ? "FATAL" : "ERROR");
-
-        fprintf(stderr, "[OpenCL %s at %s:%d] ", label, file, line);
-        va_start(args, message);
-        vfprintf(stderr, message, args);
-        va_end(args);
-        fprintf(stderr, ": %s.\n", OCL_ErrorMsg[code]);
-
-        if (is_fatal)
-                exit(EXIT_FAILURE);
+        fprintf(stderr, "[OpenCL %s at %s:%d] %s.\n", label, file, line,
+                OCL_ErrorMsg[errcode]);
 }
 
 
