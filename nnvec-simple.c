@@ -1,6 +1,10 @@
 #include "util.h"
 
-#include <smmintrin.h>
+#ifdef NO_SSE4
+#  include <tmmintrin.h>
+#else
+#  include <smmintrin.h>
+#endif
 #include <limits.h>
 #include <float.h>
 #include <stdint.h>
@@ -134,6 +138,7 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
 }
 
 
+#ifndef NO_SSE4
 void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                  int *trklass, int count, int blockcount, int *data,
                  int *klass, unsigned int *distance)
@@ -193,6 +198,7 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                 }
         }
 }
+#endif
 
 
 /**************************  FLOATING POINT VALUES  **************************/

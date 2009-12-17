@@ -1,5 +1,17 @@
-CFLAGS    ?= -O3 -fopenmp -fomit-frame-pointer -msse4.1
-LDFLAGS   += -lm -fopenmp
+# Uncomment this to permanently disable SSE 4.1 if it is not available.  The
+# affected implementations will not be compiled.  It also work by setting the
+# same variable from the command line
+#SSE4 := n
+
+ifeq ($(SSE4),n)
+sse_flags := -DNO_SSE4 -mssse3
+else
+sse_flags := -msse4.1
+endif
+
+CFLAGS  ?= -O3 -fopenmp -fomit-frame-pointer
+CFLAGS  += $(sse_flags)
+LDFLAGS += -lm -fopenmp
 
 PROGRAMS := simple unroll2 unroll4
 

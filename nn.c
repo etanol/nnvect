@@ -19,7 +19,11 @@ DECLARE(nn_double_sca)
 /* Vectorized versions defined at nnvect-*.c */
 DECLARE(nn_byte_vec)
 DECLARE(nn_short_vec)
+#ifdef NO_SSE4
+#  define nn_int_vec  NULL
+#else
 DECLARE(nn_int_vec)
+#endif
 DECLARE(nn_float_vec)
 DECLARE(nn_double_vec)
 
@@ -77,7 +81,7 @@ void nn (enum valuetype type, int scalar, struct db *trdb, struct db *db)
                 break;
         }
         if (func == NULL)
-                quit("Invalid combination of implementation and value type, with blocking");
+                quit("Invalid combination of implementation and value type");
 
         if (trdb->block_items > 0)
                 trblockcount = trdb->block_items;
