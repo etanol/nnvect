@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/cl.h>
+#include "gpu.h"  /* We only want gpu_check() from here */
 #include "util.h"
 
 #define LABEL_PAD -22
@@ -13,9 +13,9 @@ static void oclPrintPlatformInfoString (cl_platform_id plat, cl_platform_info pa
         cl_int e;
         size_t b;
 
-        e = clGetPlatformInfo(plat, param, 0, NULL, &b);  ocl_assert(e);
+        e = clGetPlatformInfo(plat, param, 0, NULL, &b);  gpu_check(e);
         s = xmalloc(b);
-        e = clGetPlatformInfo(plat, param, b, s, NULL);  ocl_assert(e);
+        e = clGetPlatformInfo(plat, param, b, s, NULL);  gpu_check(e);
         printf("   %-10s: %s\n", label, s);
         free(s);
 }
@@ -27,9 +27,9 @@ static void oclPrintDeviceInfoString (cl_device_id dev, cl_device_info param, ch
         cl_int e;
         size_t b;
 
-        e = clGetDeviceInfo(dev, param, 0, NULL, &b);  ocl_assert(e);
+        e = clGetDeviceInfo(dev, param, 0, NULL, &b);  gpu_check(e);
         s = xmalloc(b);
-        e = clGetDeviceInfo(dev, param, b, s, NULL);  ocl_assert(e);
+        e = clGetDeviceInfo(dev, param, b, s, NULL);  gpu_check(e);
         printf("      %*s: %s\n", LABEL_PAD, label, s);
         free(s);
 }
@@ -40,7 +40,7 @@ static void oclPrintDeviceInfoBool (cl_device_id dev, cl_device_info param, char
         cl_bool b;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_bool), &b, NULL);  ocl_assert(e);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_bool), &b, NULL);  gpu_check(e);
         printf("      %*s: %s\n", LABEL_PAD, label, (b == CL_TRUE ? "yes" : "no"));
 }
 
@@ -50,7 +50,7 @@ static void oclPrintDeviceInfoInt (cl_device_id dev, cl_device_info param, char 
         cl_uint n;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_uint), &n, NULL);  ocl_assert(e);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_uint), &n, NULL);  gpu_check(e);
         printf("      %*s: %u\n", LABEL_PAD, label, n);
 }
 
@@ -60,7 +60,7 @@ static void oclPrintDeviceInfoLong (cl_device_id dev, cl_device_info param, char
         cl_ulong n;
         cl_int e;
 
-        e = clGetDeviceInfo(dev, param, sizeof(cl_ulong), &n, NULL);  ocl_assert(e);
+        e = clGetDeviceInfo(dev, param, sizeof(cl_ulong), &n, NULL);  gpu_check(e);
         printf("      %*s: %lu\n", LABEL_PAD, label, n);
 }
 
@@ -74,9 +74,9 @@ int main ()
         int p, i, j;
         size_t *dims;
 
-        e = clGetPlatformIDs(0, NULL, &plat_count);  ocl_assert(e);
+        e = clGetPlatformIDs(0, NULL, &plat_count);  gpu_check(e);
         platforms = xmalloc(plat_count * sizeof(cl_platform_id));
-        e = clGetPlatformIDs(plat_count, platforms, NULL);  ocl_assert(e);
+        e = clGetPlatformIDs(plat_count, platforms, NULL);  gpu_check(e);
         printf("%d platforms found:\n\n", plat_count);
         for (p = 0;  p < plat_count;  p++)
         {
@@ -88,10 +88,10 @@ int main ()
                 printf("\n");
 
                 e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL, 0, NULL,
-                                   &device_count);  ocl_assert(e);
+                                   &device_count);  gpu_check(e);
                 devices = xmalloc(device_count * sizeof(cl_device_id));
                 e = clGetDeviceIDs(platforms[p], CL_DEVICE_TYPE_ALL,
-                                   device_count, devices, NULL);  ocl_assert(e);
+                                   device_count, devices, NULL);  gpu_check(e);
                 printf("   %d GPU devices found:\n\n", device_count);
 
                 for (i = 0;  i < device_count;  i++)
@@ -129,11 +129,11 @@ int main ()
                         oclPrintDeviceInfoInt(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, "Work item dimensions");
 
                         e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
-                                            sizeof(cl_uint), &widim, NULL);  ocl_assert(e);
+                                            sizeof(cl_uint), &widim, NULL);  gpu_check(e);
                         printf("      %*s: [ ", LABEL_PAD, "Work group volume");
                         dims = xmalloc(sizeof(size_t) * widim);
                         e = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_ITEM_SIZES,
-                                            sizeof(size_t) * widim, dims, NULL);  ocl_assert(e);
+                                            sizeof(size_t) * widim, dims, NULL);  gpu_check(e);
                         for (j = 0;  j < widim;  j++)
                                 printf("%lu ", dims[j]);
                         printf("]\n");

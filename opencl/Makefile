@@ -6,7 +6,8 @@ LDFLAGS   += -lOpenCL
 
 PROGRAMS := gpu_metrics
 
-gpu_metrics_SOURCES := gpu_metrics.c util.c
+gpu_metrics_SOURCES := gpu_metrics.c gpu.c util.c
 
+vpath %.c ..
 include ../auto.mk
 
