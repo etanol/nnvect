@@ -1,5 +1,159 @@
 #include "gpu.h"
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include "db.h"
 #include "util.h"
+
+
+struct gpu *create_gpu (const char *filename, const char *kernelname)
+{
+        int fd, e;
+        struct stat st;
+        size_t filesize, sz;
+        char *data, *errors;
+        cl_context ctx;
+        cl_device_id *devices, dev;
+        cl_command_queue queue;
+        cl_program prog;
+        cl_kernel kernel;
+        cl_build_status status;
+        cl_int ce;
+        struct gpu *gpu;
+
+        /* Create context */
+        ctx = clCreateContextFromType(NULL, CL_DEVICE_TYPE_GPU, NULL,
+                                               NULL, &ce);  gpu_check(ce);
+        /* Get first device in context list */
+        ce = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, 0, NULL, &sz);  gpu_check(ce);
+        devices = xmalloc(sz);
+        ce = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, sz, devices, NULL);  gpu_check(ce);
+        dev = devices[0];
+        free(devices);
+        /* Create command queue */
+        queue = clCreateCommandQueue(ctx, dev, 0, &ce);  gpu_check(ce);
+
+        /* Load program code */
+        fd = open(filename, O_RDONLY);
+        if (fd == -1)
+                fatal("Could not open '%s'", filename);
+        e = fstat(fd, &st);
+        if (e == -1)
+                fatal("Could not stat '%s'", filename);
+        data = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (data == MAP_FAILED)
+                fatal("Could not map '%s'", filename);
+
+        /* Create and compile the program (print errors on failure) */
+        filesize = (size_t) st.st_size;
+        prog = clCreateProgramWithSource(ctx, 1, (const char **) &data,
+                                         &filesize, &ce);  gpu_check(ce);
+        ce = clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);  gpu_check(ce);
+        do {
+                sleep(1);
+                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_STATUS,
+                                           sizeof(cl_build_status), &status,
+                                           NULL);  gpu_check(ce);
+        } while (status == CL_BUILD_IN_PROGRESS);
+        if (status != CL_BUILD_SUCCESS)
+        {
+                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_LOG, 0,
+                                           NULL, &sz);  gpu_check(ce);
+                errors = xmalloc(sz);
+                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_LOG, sz,
+                                           errors, NULL);  gpu_check(ce);
+
+                fatal("Errors during '%s' compilation:\n%s", filename, errors);
+        }
+
+        /* Create the corresponding kernel */
+        kernel = clCreateKernel(prog, kernelname, &ce);  gpu_check(ce);
+
+        /* Unload the program source code */
+        e = munmap(data, st.st_size);
+        if (e == -1)
+                error("Unmapping file '%s'", filename);
+        e = close(fd);
+        if (e == -1)
+                error("Closing file '%s'", filename);
+
+        /* Finally pack all the control information together */
+        gpu = xmalloc(sizeof(struct gpu));
+        gpu->context = ctx;
+        gpu->device = dev;
+        gpu->queue = queue;
+        gpu->program = prog;
+        gpu->kernel = kernel;
+        return gpu;
+}
+
+
+void send_nn_arguments (struct gpu *gpu, struct db *trdb, struct db *db)
+{
+        cl_int e;
+
+        gpu->trdata = clCreateBuffer(gpu->context,
+                                     CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                     trdb->count * trdb->dimensions * trdb->typesize,
+                                     trdb->data, &e);  gpu_check(e);
+        gpu->data = clCreateBuffer(gpu->context,
+                                   CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                   db->count * db->dimensions * db->typesize,
+                                   db->data, &e);  gpu_check(e);
+        gpu->trklasses = clCreateBuffer(gpu->context,
+                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                        trdb->count * sizeof(int), trdb->klass,
+                                        &e);  gpu_check(e);
+        gpu->klasses = clCreateBuffer(gpu->context, CL_MEM_WRITE_ONLY,
+                                      db->count * sizeof(int), NULL, &e);  gpu_check(e);
+
+        e = clSetKernelArg(gpu->kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 2, sizeof(cl_mem), &gpu->trdata);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 3, sizeof(cl_mem), &gpu->trklasses);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 4, sizeof(int), &db->count);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 5, sizeof(cl_mem), &gpu->data);  gpu_check(e);
+        e = clSetKernelArg(gpu->kernel, 6, sizeof(cl_mem), &gpu->klasses);  gpu_check(e);
+}
+
+
+void execute_kernel (struct gpu *gpu)
+{
+        cl_event ev;
+        cl_int e;
+
+        e = clEnqueueTask(gpu->queue, gpu->kernel, 0, NULL, &ev);  gpu_check(e);
+        e = clWaitForEvents(1, &ev);  gpu_check(e);
+}
+
+
+void get_nn_result (struct gpu *gpu, int size, void *data)
+{
+        cl_int e;
+
+        e = clEnqueueReadBuffer(gpu->queue, gpu->klasses, CL_TRUE, 0, size,
+                                data, 0, NULL, NULL);
+}
+
+
+void destroy_gpu (struct gpu *gpu)
+{
+        cl_int e;
+
+        e = clReleaseMemObject(gpu->trdata);     gpu_check(e);
+        e = clReleaseMemObject(gpu->trklasses);  gpu_check(e);
+        e = clReleaseMemObject(gpu->data);       gpu_check(e);
+        e = clReleaseMemObject(gpu->klasses);    gpu_check(e);
+        e = clReleaseKernel(gpu->kernel);        gpu_check(e);
+        e = clReleaseProgram(gpu->program);      gpu_check(e);
+        e = clReleaseCommandQueue(gpu->queue);   gpu_check(e);
+        e = clReleaseContext(gpu->context);      gpu_check(e);
+
+        free(gpu);
+}
 
 
 void gpu_fatal (const char *file, int line, cl_int errcode)
