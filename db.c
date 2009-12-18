@@ -232,6 +232,7 @@ struct db *load_db (const char *filename, enum valuetype type,
                 db->data = xmalloc(db->count * rowsize);
         }
         db->type = type;
+        db->typesize = typesize;
         db->klass = xmalloc(db->count * sizeof(int));
         memset(db->klass, 0, db->count * sizeof(int));
         memset(db->data, 0, db->count * rowsize);
@@ -258,21 +259,11 @@ struct db *load_db (const char *filename, enum valuetype type,
 void print_db_info (struct db *db)
 {
         int padcolumns;
-        unsigned int typesize, datasize, padsize, rowsize, blocksize;
-
-        typesize = 0;
-        switch (db->type)
-        {
-        case BYTE:    typesize = sizeof(char);    break;
-        case SHORT:   typesize = sizeof(short);   break;
-        case INT:     typesize = sizeof(int);     break;
-        case FLOAT:   typesize = sizeof(float);   break;
-        case DOUBLE:  typesize = sizeof(double);  break;
-        }
+        unsigned int datasize, padsize, rowsize, blocksize;
 
         padcolumns = db->dimensions - db->real_dimensions;
-        rowsize = db->dimensions * typesize;
-        padsize = db->count * padcolumns * typesize;
+        rowsize = db->dimensions * db->typesize;
+        padsize = db->count * padcolumns * db->typesize;
         datasize = db->count * rowsize;
         blocksize = db->block_items * rowsize;
 
@@ -285,7 +276,7 @@ void print_db_info (struct db *db)
         printf("    Data array is %u bytes, of which %u (%.1f%%) are padding\n",
                datasize, padsize, (padsize * 100.0f) / datasize);
         printf("    Data array would be %u bytes without padding\n",
-               db->count * db->real_dimensions * typesize);
+               db->count * db->real_dimensions * db->typesize);
         /* Detailed blocking diagnostics */
         if (db->wanted_block_size > 0)
         {

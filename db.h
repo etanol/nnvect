@@ -2,10 +2,12 @@
 #define __nnvect_db
 
 #include "nn.h"
+#include <sys/types.h>
 
 struct db
 {
         enum valuetype type;
+        size_t typesize;
         int count;
         int wanted_block_size;
         int block_items;
