@@ -103,7 +103,7 @@ int main (int argc, char **argv)
         dumpfile = NULL;
         block_limit = 0;
         test_block_limit = 0;
-        runs = 3;
+        runs = DEFAULT_RUNS;
         type = FLOAT;
         typelabel = NULL;
         mops_label = "MFLOPS";
