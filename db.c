@@ -275,7 +275,7 @@ void print_db_info (struct db *db)
                (unsigned int) (db->count * sizeof(int)));
         printf("    Data array is %u bytes, of which %u (%.1f%%) are padding\n",
                datasize, padsize, (padsize * 100.0f) / datasize);
-        printf("    Data array would be %u bytes without padding\n",
+        printf("    Data array would be %lu bytes without padding\n",
                db->count * db->real_dimensions * db->typesize);
         /* Detailed blocking diagnostics */
         if (db->wanted_block_size > 0)
