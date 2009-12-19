@@ -139,7 +139,9 @@ int main (int argc, char **argv)
                      train_db->dimensions);
 
         result = xmalloc(test_db->count * sizeof(int));
+        printf("\nSetting up GPU\n");
         nv = create_gpu(kernelfile, kernelname);
+        printf("Feeding GPU with data\n\n");
         send_nn_arguments(nv, train_db, test_db);
 
         ts = prepare_stats(runs);
