@@ -11,7 +11,7 @@ void nn (int dimensions, int trcount, __global float *trdata,
         for (n = 0;  n < count;  n++)
         {
                 i = n * dimensions;
-                min_distance = 0x1.fffffep127f;
+                min_distance = FLT_MAX;
                 for (tn = 0;  tn < trcount;  tn++)
                 {
                         ti = tn * dimensions;
@@ -31,3 +31,4 @@ void nn (int dimensions, int trcount, __global float *trdata,
         }
 }
 
+// vim:syntax=c
