@@ -91,7 +91,7 @@ static inline double mops (struct db *train, struct db *test, double secs)
 int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
-        int cmdopt, has_opts, want_scalar, r, runs, i, hits, k;
+        int cmdopt, has_opts, want_scalar, padding_type, r, runs, i, hits, k;
         int block_limit, test_block_limit;
         int *original;
         enum valuetype type;
@@ -108,6 +108,7 @@ int main (int argc, char **argv)
         typelabel = NULL;
         mops_label = "MFLOPS";
         want_scalar = 0;
+        padding_type = 1;
         has_opts = 1;
         k = 1;
         nbh = NULL;
@@ -147,7 +148,10 @@ int main (int argc, char **argv)
                                 warning("Invalid value for k: %s", optarg);
                         }
                         else if (k > 1)
+                        {
                                 want_scalar = 1;
+                                padding_type = 0;
+                        }
                         break;
                 case 'o':
                         if (dumpfile != NULL)
@@ -169,6 +173,7 @@ int main (int argc, char **argv)
                         break;
                 case 's':
                         want_scalar = 1;
+                        padding_type = 0;
                         break;
                 case 't':
                         strtolower(optarg);
@@ -216,7 +221,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        train_db = load_db(fullname, type, block_limit, !want_scalar, 0);
+        train_db = load_db(fullname, type, block_limit, padding_type, 0);
         free(fullname);
         if (train_db->block_items > 0)
                 train_db->block_items = adjusted_block_count(train_db->block_items);
@@ -225,7 +230,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(fullname, type, test_block_limit, !want_scalar, 1);
+        db = load_db(fullname, type, test_block_limit, padding_type, 1);
         free(fullname);
         print_db_info(db);
         printf("\n");

@@ -171,8 +171,15 @@ static void read_data (struct file *file, struct db *db)
 }
 
 
+/*
+ * The padding type values can be:
+ *
+ *     0 ::= no padding
+ *     1 ::= pad dimensions to ALIGNMENT bytes
+ *     2 ::= pad dimensions to ALIGNMENT elements
+ */
 struct db *load_db (const char *filename, enum valuetype type,
-                    int max_block_size, int want_padding, int want_distances)
+                    int max_block_size, int padding_type, int want_distances)
 {
         char *infoname;
         int check_float, typesize, rowsize, distsize;
@@ -188,7 +195,7 @@ struct db *load_db (const char *filename, enum valuetype type,
         free(infoname);
 
         check_float = 0;
-        typesize = distsize = 0;
+        typesize = distsize = rowsize = 0;
         switch (type)
         {
         case BYTE:
@@ -219,18 +226,27 @@ struct db *load_db (const char *filename, enum valuetype type,
         if (check_float && db->has_floats)
                 quit("Database has floating point numbers but an integer type was requested");
 
-        if (want_padding)
+        switch (padding_type)
         {
-                rowsize = PADDED(db->real_dimensions * typesize);
-                db->dimensions = rowsize / typesize;
-                db->data = xmalloc_aligned(db->count * rowsize);
-        }
-        else
-        {
+        case 0:
                 rowsize = db->real_dimensions * typesize;
                 db->dimensions = db->real_dimensions;
                 db->data = xmalloc(db->count * rowsize);
+                break;
+        case 1:
+                rowsize = PADDED(db->real_dimensions * typesize);
+                db->dimensions = rowsize / typesize;
+                db->data = xmalloc_aligned(db->count * rowsize);
+                break;
+        case 2:
+                db->dimensions = PADDED(db->real_dimensions);
+                rowsize = db->dimensions * typesize;
+                db->data = xmalloc(db->count * rowsize);
+                break;
+        default:
+                quit("Invalid padding type");
         }
+
         db->type = type;
         db->typesize = typesize;
         db->klass = xmalloc(db->count * sizeof(int));

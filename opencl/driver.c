@@ -124,13 +124,13 @@ int main (int argc, char **argv)
         /* Load the databases */
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s\n\n", fullname);
-        train_db = load_db(fullname, FLOAT, 0, 0, 0);
+        train_db = load_db(fullname, FLOAT, 0, 2, 0);
         free(fullname);
         print_db_info(train_db);
 
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s\n\n", fullname);
-        test_db = load_db(fullname, FLOAT, 0, 0, 0);
+        test_db = load_db(fullname, FLOAT, 0, 2, 0);
         free(fullname);
         print_db_info(test_db);
 
