@@ -1,4 +1,3 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "gpu.h"  /* We only want gpu_check() from here */
