@@ -68,7 +68,7 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
                 ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_LOG, sz,
                                            errors, NULL);  gpu_check(ce);
 
-                fatal("Errors during '%s' compilation:\n%s", filename, errors);
+                quit("Errors during '%s' compilation:\n%s", filename, errors);
         }
 
         /* Create the corresponding kernel */
