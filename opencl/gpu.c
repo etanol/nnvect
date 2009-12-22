@@ -51,7 +51,9 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
         filesize = (size_t) st.st_size;
         prog = clCreateProgramWithSource(ctx, 1, (const char **) &data,
                                          &filesize, &ce);  gpu_check(ce);
-        ce = clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);  gpu_check(ce);
+        /* Ignore errors in clBuildProgram() as they will be detected and
+         * reported in more detail later */
+        clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);
         do {
                 sleep(1);
                 ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_STATUS,
@@ -135,7 +137,7 @@ void get_nn_result (struct gpu *gpu, int size, void *data)
         cl_int e;
 
         e = clEnqueueReadBuffer(gpu->queue, gpu->klasses, CL_TRUE, 0, size,
-                                data, 0, NULL, NULL);
+                                data, 0, NULL, NULL);  gpu_check(e);
 }
 
 
@@ -211,6 +213,6 @@ void gpu_fatal (const char *file, int line, cl_int errcode)
         default                                : errmsg = "Invalid error code";
         }
 
-        print_message(file, line, 4, "OpenCL error: %s", errmsg);
+        print_message(file, line, 3, "OpenCL error: %s", errmsg);
 }
 
