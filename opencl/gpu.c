@@ -124,10 +124,16 @@ void send_nn_arguments (struct gpu *gpu, struct db *trdb, struct db *db)
 
 void execute_kernel (struct gpu *gpu)
 {
+        size_t local[2], global[2];
         cl_event ev;
         cl_int e;
 
-        e = clEnqueueTask(gpu->queue, gpu->kernel, 0, NULL, &ev);  gpu_check(e);
+        local[0] = global[0] = 16;
+        local[1] = 1;
+        global[1] = 60;
+
+        e = clEnqueueNDRangeKernel(gpu->queue, gpu->kernel, 2, NULL, global,
+                                   local, 0, NULL, &ev);  gpu_check(e);
         e = clWaitForEvents(1, &ev);  gpu_check(e);
 }
 
