@@ -10,7 +10,7 @@
 #define KERNELNAME   "nn"
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "hk:op:r:";
+static char OptString[] = "hk:o:p:r:";
 
 static struct option LongOpts[] = {
         { "help",    no_argument,       NULL, 'h' },
