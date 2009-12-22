@@ -188,7 +188,7 @@ int main (int argc, char **argv)
                 if (f == NULL)
                         fatal("Could not open '%s'", dumpfile);
                 for (i = 0;  i < test_db->count;  i++)
-                        fprintf(f, "%d\n", test_db->klass[i]);
+                        fprintf(f, "%d\n", result[i]);
                 fclose(f);
         }
 
