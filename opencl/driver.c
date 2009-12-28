@@ -51,7 +51,6 @@ int main (int argc, char **argv)
         struct db *test_db, *train_db;
         int i, hits, *result;
         int cmdopt, has_opts, r, runs;
-        struct gpu *nv;
         struct timestats *ts;
 
         progname = argv[0];
@@ -137,12 +136,13 @@ int main (int argc, char **argv)
         if (test_db->dimensions != train_db->dimensions)
                 quit("Dimensions do not match (%d != %d)", test_db->dimensions,
                      train_db->dimensions);
-
         result = xmalloc(test_db->count * sizeof(int));
+
+        /* Prepare the GPU */
         printf("\nSetting up GPU\n");
-        nv = create_gpu(kernelfile, kernelname);
+        init_gpu(kernelfile, kernelname);
         printf("Feeding GPU with data\n\n");
-        send_nn_arguments(nv, train_db, test_db);
+        send_nn_arguments(train_db, test_db);
 
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
@@ -152,14 +152,14 @@ int main (int argc, char **argv)
                 printf("Run %d of %d ... ", r + 1, runs);
                 fflush(stdout);
                 start_run(ts);
-                execute_kernel(nv);
+                execute_kernel();
                 stop_run(ts);
                 t = get_last_run_time(ts);
                 printf("%lf s\n", t);
         }
 
-        get_nn_result(nv, test_db->count * sizeof(int), result);
-        destroy_gpu(nv);
+        get_nn_result(test_db->count * sizeof(int), result);
+        destroy_gpu();
 
         /* Measure accuracy */
         hits = 0;

@@ -6,36 +6,50 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "db.h"
 #include "util.h"
 
+struct _GPUData
+{
+        cl_context context;
+        cl_device_id device;
+        cl_command_queue queue;
+        cl_program program;
+        cl_kernel kernel;
 
-struct gpu *create_gpu (const char *filename, const char *kernelname)
+        cl_mem trdata;
+        cl_mem trklasses;
+        cl_mem data;
+        cl_mem klasses;
+};
+
+static struct _GPUData GPU;
+
+
+void init_gpu (const char *filename, const char *kernelname)
 {
         int fd, e;
         struct stat st;
         size_t filesize, sz;
         char *data, *errors, buildflags[128];
-        cl_context ctx;
-        cl_device_id *devices, dev;
-        cl_command_queue queue;
-        cl_program prog;
-        cl_kernel kernel;
+        cl_device_id *devices;
         cl_build_status status;
         cl_int ce;
-        struct gpu *gpu;
+
+        memset(&GPU, 0, sizeof(struct _GPUData));
 
         /* Create context */
-        ctx = clCreateContextFromType(NULL, CL_DEVICE_TYPE_GPU, NULL,
-                                               NULL, &ce);  gpu_check(ce);
+        GPU.context = clCreateContextFromType(NULL, CL_DEVICE_TYPE_GPU, NULL,
+                                              NULL, &ce);  gpu_check(ce);
         /* Get first device in context list */
-        ce = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, 0, NULL, &sz);  gpu_check(ce);
+        ce = clGetContextInfo(GPU.context , CL_CONTEXT_DEVICES, 0, NULL, &sz);  gpu_check(ce);
         devices = xmalloc(sz);
-        ce = clGetContextInfo(ctx, CL_CONTEXT_DEVICES, sz, devices, NULL);  gpu_check(ce);
-        dev = devices[0];
+        ce = clGetContextInfo(GPU.context, CL_CONTEXT_DEVICES, sz, devices, NULL);  gpu_check(ce);
+        GPU.device = devices[0];
         free(devices);
         /* Create command queue */
-        queue = clCreateCommandQueue(ctx, dev, 0, &ce);  gpu_check(ce);
+        GPU.queue = clCreateCommandQueue(GPU.context, GPU.device, 0, &ce);  gpu_check(ce);
 
         /* Load program code */
         fd = open(filename, O_RDONLY);
@@ -50,32 +64,34 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
 
         /* Create and compile the program (print errors on failure) */
         filesize = (size_t) st.st_size;
-        prog = clCreateProgramWithSource(ctx, 1, (const char **) &data,
-                                         &filesize, &ce);  gpu_check(ce);
+        GPU.program = clCreateProgramWithSource(GPU.context, 1,
+                                                (const char **) &data, &filesize,
+                                                &ce);  gpu_check(ce);
         /* Ignore errors in clBuildProgram() as they will be detected and
          * reported in more detail later */
         snprintf(buildflags, 128, "-DBLOCKDIM_X=%d -DBLOCKDIM_Y=%d", BLOCKDIM_X,
                  BLOCKDIM_Y);
-        clBuildProgram(prog, 0, NULL, buildflags, NULL, NULL);
+        clBuildProgram(GPU.program, 0, NULL, buildflags, NULL, NULL);
         do {
                 sleep(1);
-                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_STATUS,
+                ce = clGetProgramBuildInfo(GPU.program, GPU.device,
+                                           CL_PROGRAM_BUILD_STATUS,
                                            sizeof(cl_build_status), &status,
                                            NULL);  gpu_check(ce);
         } while (status == CL_BUILD_IN_PROGRESS);
         if (status != CL_BUILD_SUCCESS)
         {
-                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_LOG, 0,
-                                           NULL, &sz);  gpu_check(ce);
+                ce = clGetProgramBuildInfo(GPU.program, GPU.device,
+                                           CL_PROGRAM_BUILD_LOG, 0, NULL, &sz);  gpu_check(ce);
                 errors = xmalloc(sz);
-                ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_LOG, sz,
-                                           errors, NULL);  gpu_check(ce);
-
+                ce = clGetProgramBuildInfo(GPU.program, GPU.device,
+                                           CL_PROGRAM_BUILD_LOG, sz, errors, NULL);  gpu_check(ce);
+                destroy_gpu();
                 quit("Errors during '%s' compilation:\n%s", filename, errors);
         }
 
         /* Create the corresponding kernel */
-        kernel = clCreateKernel(prog, kernelname, &ce);  gpu_check(ce);
+        GPU.kernel = clCreateKernel(GPU.program, kernelname, &ce);  gpu_check(ce);
 
         /* Unload the program source code */
         e = munmap(data, st.st_size);
@@ -84,48 +100,39 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
         e = close(fd);
         if (e == -1)
                 error("Closing file '%s'", filename);
-
-        /* Finally pack all the control information together */
-        gpu = xmalloc(sizeof(struct gpu));
-        gpu->context = ctx;
-        gpu->device = dev;
-        gpu->queue = queue;
-        gpu->program = prog;
-        gpu->kernel = kernel;
-        return gpu;
 }
 
 
-void send_nn_arguments (struct gpu *gpu, struct db *trdb, struct db *db)
+void send_nn_arguments (struct db *trdb, struct db *db)
 {
         cl_int e;
 
-        gpu->trdata = clCreateBuffer(gpu->context,
+        GPU.trdata = clCreateBuffer(GPU.context,
                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                      trdb->count * trdb->dimensions * trdb->typesize,
                                      trdb->data, &e);  gpu_check(e);
-        gpu->data = clCreateBuffer(gpu->context,
+        GPU.data = clCreateBuffer(GPU.context,
                                    CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    db->count * db->dimensions * db->typesize,
                                    db->data, &e);  gpu_check(e);
-        gpu->trklasses = clCreateBuffer(gpu->context,
+        GPU.trklasses = clCreateBuffer(GPU.context,
                                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                         trdb->count * sizeof(int), trdb->klass,
                                         &e);  gpu_check(e);
-        gpu->klasses = clCreateBuffer(gpu->context, CL_MEM_WRITE_ONLY,
+        GPU.klasses = clCreateBuffer(GPU.context, CL_MEM_WRITE_ONLY,
                                       db->count * sizeof(int), NULL, &e);  gpu_check(e);
 
-        e = clSetKernelArg(gpu->kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 2, sizeof(cl_mem), &gpu->trdata);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 3, sizeof(cl_mem), &gpu->trklasses);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 4, sizeof(int), &db->count);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 5, sizeof(cl_mem), &gpu->data);  gpu_check(e);
-        e = clSetKernelArg(gpu->kernel, 6, sizeof(cl_mem), &gpu->klasses);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 2, sizeof(cl_mem), &GPU.trdata);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 3, sizeof(cl_mem), &GPU.trklasses);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 4, sizeof(int), &db->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 5, sizeof(cl_mem), &GPU.data);  gpu_check(e);
+        e = clSetKernelArg(GPU.kernel, 6, sizeof(cl_mem), &GPU.klasses);  gpu_check(e);
 }
 
 
-void execute_kernel (struct gpu *gpu)
+void execute_kernel (void)
 {
         size_t local[2], global[2];
         cl_int e;
@@ -134,35 +141,39 @@ void execute_kernel (struct gpu *gpu)
         local[1] = BLOCKDIM_Y;
         global[1] = BLOCKDIM_Y * 30;
 
-        e = clEnqueueNDRangeKernel(gpu->queue, gpu->kernel, 2, NULL, global,
+        e = clEnqueueNDRangeKernel(GPU.queue, GPU.kernel, 2, NULL, global,
                                    local, 0, NULL, NULL);  gpu_check(e);
-        e = clFinish(gpu->queue);  gpu_check(e);
+        e = clFinish(GPU.queue);  gpu_check(e);
 }
 
 
-void get_nn_result (struct gpu *gpu, int size, void *data)
+void get_nn_result (int size, void *data)
 {
         cl_int e;
 
-        e = clEnqueueReadBuffer(gpu->queue, gpu->klasses, CL_TRUE, 0, size,
+        e = clEnqueueReadBuffer(GPU.queue, GPU.klasses, CL_TRUE, 0, size,
                                 data, 0, NULL, NULL);  gpu_check(e);
 }
 
 
-void destroy_gpu (struct gpu *gpu)
+void destroy_gpu (void)
 {
-        cl_int e;
-
-        e = clReleaseMemObject(gpu->trdata);     gpu_check(e);
-        e = clReleaseMemObject(gpu->trklasses);  gpu_check(e);
-        e = clReleaseMemObject(gpu->data);       gpu_check(e);
-        e = clReleaseMemObject(gpu->klasses);    gpu_check(e);
-        e = clReleaseKernel(gpu->kernel);        gpu_check(e);
-        e = clReleaseProgram(gpu->program);      gpu_check(e);
-        e = clReleaseCommandQueue(gpu->queue);   gpu_check(e);
-        e = clReleaseContext(gpu->context);      gpu_check(e);
-
-        free(gpu);
+        if (GPU.trdata)
+                clReleaseMemObject(GPU.trdata);
+        if (GPU.trklasses)
+                clReleaseMemObject(GPU.trklasses);
+        if (GPU.data)
+                clReleaseMemObject(GPU.data);
+        if (GPU.klasses)
+                clReleaseMemObject(GPU.klasses);
+        if (GPU.kernel)
+                clReleaseKernel(GPU.kernel);
+        if (GPU.program)
+                clReleaseProgram(GPU.program);
+        if (GPU.queue)
+                clReleaseCommandQueue(GPU.queue);
+        if (GPU.kernel)
+                clReleaseContext(GPU.context);
 }
 
 
@@ -221,6 +232,7 @@ void gpu_fatal (const char *file, int line, cl_int errcode)
         default                                : errmsg = "Invalid error code";
         }
 
+        destroy_gpu();
         print_message(file, line, 3, "OpenCL error: %s", errmsg);
 }
 
