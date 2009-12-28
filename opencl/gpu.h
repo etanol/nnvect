@@ -4,7 +4,7 @@
 #include <CL/cl.h>
 
 #define BLOCKDIM_X  16
-#define BLOCKDIM_Y   4
+#define BLOCKDIM_Y  32
 struct db;
 
 struct gpu
