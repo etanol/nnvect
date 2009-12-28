@@ -3,6 +3,8 @@
 
 #include <CL/cl.h>
 
+#define BLOCKDIM_X  16
+#define BLOCKDIM_Y   4
 struct db;
 
 struct gpu

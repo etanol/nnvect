@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "db.h"
 #include "util.h"
 
@@ -14,7 +15,7 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
         int fd, e;
         struct stat st;
         size_t filesize, sz;
-        char *data, *errors;
+        char *data, *errors, buildflags[128];
         cl_context ctx;
         cl_device_id *devices, dev;
         cl_command_queue queue;
@@ -53,7 +54,9 @@ struct gpu *create_gpu (const char *filename, const char *kernelname)
                                          &filesize, &ce);  gpu_check(ce);
         /* Ignore errors in clBuildProgram() as they will be detected and
          * reported in more detail later */
-        clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);
+        snprintf(buildflags, 128, "-DBLOCKDIM_X=%d -DBLOCKDIM_Y=%d", BLOCKDIM_X,
+                 BLOCKDIM_Y);
+        clBuildProgram(prog, 0, NULL, buildflags, NULL, NULL);
         do {
                 sleep(1);
                 ce = clGetProgramBuildInfo(prog, dev, CL_PROGRAM_BUILD_STATUS,
@@ -125,16 +128,15 @@ void send_nn_arguments (struct gpu *gpu, struct db *trdb, struct db *db)
 void execute_kernel (struct gpu *gpu)
 {
         size_t local[2], global[2];
-        cl_event ev;
         cl_int e;
 
-        local[0] = global[0] = 16;
-        local[1] = 1;
-        global[1] = 60;
+        local[0] = global[0] = BLOCKDIM_X;
+        local[1] = BLOCKDIM_Y;
+        global[1] = BLOCKDIM_Y * 30;
 
         e = clEnqueueNDRangeKernel(gpu->queue, gpu->kernel, 2, NULL, global,
-                                   local, 0, NULL, &ev);  gpu_check(e);
-        e = clWaitForEvents(1, &ev);  gpu_check(e);
+                                   local, 0, NULL, NULL);  gpu_check(e);
+        e = clFinish(gpu->queue);  gpu_check(e);
 }
 
 
