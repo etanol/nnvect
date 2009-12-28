@@ -1,3 +1,10 @@
+#define LOCAL_X   get_local_id(0)
+#define LOCAL_Y   get_local_id(1)
+#define GLOBAL_X  get_global_id(0)
+#define GLOBAL_Y  get_global_id(1)
+#define DIM_X     get_global_size(0)
+#define DIM_Y     get_global_size(1)
+
 __kernel
 void nn (int dimensions, int trcount, __global float *trdata,
          __global int *trklass, int count, __global float *data,
@@ -10,32 +17,32 @@ void nn (int dimensions, int trcount, __global float *trdata,
         __local float min_distance[BLOCKDIM_Y];
         __local int cl[BLOCKDIM_Y];
 
-        for (n = get_global_id(1);  n < count;  n += get_global_size(1))
+        for (n = GLOBAL_Y;  n < count;  n += DIM_Y)
         {
-                if (get_local_id(0) == 0)
-                        min_distance[get_local_id(1)] = FLT_MAX;
+                if (LOCAL_X == 0)
+                        min_distance[LOCAL_Y] = FLT_MAX;
                 for (tn = 0;  tn < trcount;  tn++)
                 {
-                        distance[get_local_id(1)][get_local_id(0)] = 0.0f;
-                        for (d = 0;  d < dimensions;  d += get_local_size(0))
+                        distance[LOCAL_Y][LOCAL_X] = 0.0f;
+                        for (d = 0;  d < dimensions;  d += BLOCKDIM_X)
                         {
-                                tmp = data[n * dimensions + d + get_local_id(0)] -
-                                     trdata[tn * dimensions + d + get_local_id(0)];
-                                distance[get_local_id(1)][get_local_id(0)] += tmp * tmp;
+                                tmp = data[n * dimensions + d + LOCAL_X] -
+                                     trdata[tn * dimensions + d + LOCAL_X];
+                                distance[LOCAL_Y][LOCAL_X] += tmp * tmp;
                         }
                         /* Distance reduction */
                         barrier(CLK_LOCAL_MEM_FENCE);
-                        for (stride = get_local_size(0) / 2;  stride > 0;  stride /= 2)
-                                if (get_local_id(0) < stride)
-                                        distance[get_local_id(1)][get_local_id(0)] += distance[get_local_id(1)][get_local_id(0) + stride];
-                        if (get_local_id(0) == 0)
-                                if (distance[get_local_id(1)][0] < min_distance[get_local_id(1)])
+                        for (stride = BLOCKDIM_X / 2;  stride > 0;  stride /= 2)
+                                if (LOCAL_X < stride)
+                                        distance[LOCAL_Y][LOCAL_X] += distance[LOCAL_Y][LOCAL_X + stride];
+                        if (LOCAL_X == 0)
+                                if (distance[LOCAL_Y][0] < min_distance[LOCAL_Y])
                                 {
-                                        min_distance[get_local_id(1)] = distance[get_local_id(1)][0];
-                                        cl[get_local_id(1)] = trklass[tn];
+                                        min_distance[LOCAL_Y] = distance[LOCAL_Y][0];
+                                        cl[LOCAL_Y] = trklass[tn];
                                 }
                 }
-                klass[n] = cl[get_local_id(1)];
+                klass[n] = cl[LOCAL_Y];
         }
 }
 
