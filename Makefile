@@ -9,9 +9,9 @@ else
 sse_flags := -msse4.1
 endif
 
-CFLAGS  ?= -O3 -fopenmp -fomit-frame-pointer
-CFLAGS  += $(sse_flags)
-LDFLAGS += -lm -fopenmp
+CFLAGS ?= -O3 -fomit-frame-pointer
+override CFLAGS  += -fopenmp $(sse_flags)
+override LDFLAGS += -lm -fopenmp
 
 PROGRAMS := simple unroll2 unroll4
 
