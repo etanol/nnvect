@@ -177,9 +177,6 @@ static void read_data (struct file *file, struct db *db)
  *     0 ::= no padding
  *     1 ::= pad dimensions to ALIGNMENT bytes
  *     2 ::= pad dimensions to ALIGNMENT elements
- *
- * Use a negative value for max_block_size and its absolute value will indicate
- * number of elements instead of bytes.
  */
 struct db *load_db (const char *filename, enum valuetype type,
                     int max_block_size, int padding_type, int want_distances)
@@ -256,11 +253,7 @@ struct db *load_db (const char *filename, enum valuetype type,
         memset(db->klass, 0, db->count * sizeof(int));
         memset(db->data, 0, db->count * rowsize);
 
-        if (max_block_size < 0)
-                db->wanted_block_size = -max_block_size * rowsize;
-        else
-                db->wanted_block_size = max_block_size;
-
+        db->wanted_block_size = max_block_size;
         if (max_block_size > 0 && db->count * rowsize > max_block_size)
                 db->block_items = max_block_size / rowsize;
         else
