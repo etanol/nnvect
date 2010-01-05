@@ -69,8 +69,7 @@ void init_gpu (const char *filename, const char *kernelname)
                                                 &ce);  gpu_check(ce);
         /* Ignore errors in clBuildProgram() as they will be detected and
          * reported in more detail later */
-        snprintf(buildflags, 128, "-DBLOCKDIM_X=%d -DBLOCKDIM_Y=%d", BLOCKDIM_X,
-                 BLOCKDIM_Y);
+        snprintf(buildflags, 128, "-DBS_X=%d -DBS_Y=%d", BLOCKDIM_X, BLOCKDIM_Y);
         clBuildProgram(GPU.program, 0, NULL, buildflags, NULL, NULL);
         do {
                 sleep(1);
