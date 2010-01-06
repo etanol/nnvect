@@ -25,7 +25,7 @@ EOP
 }
 
 ensure_path $plots
-for d in sizes times mflops scales comptimes comptimes2
+for d in sizes times mflops scales comptimes comptimes2 gputimes
 do
     ensure_path $plots/$d
 done
@@ -188,8 +188,8 @@ do
         best='-'
         test -f $in_svm && svm=$(awk "$SVM_TIMES" $in_svm)
         test -f $in_lin && lin=$(awk "$SVM_TIMES" $in_lin)
-        test -f $in_worst && worst=$(awk "$NN_TIMES" $in_worst)
-        test -f $in_best && best=$(awk "$NN_TIMES" $in_best)
+        test -f $in_worst && worst=$(awk "$NN_TIME" $in_worst)
+        test -f $in_best && best=$(awk "$NN_TIME" $in_best)
         data=$plots/comptimes/table-$bf-$t.txt
         {
             echo "LibSVM  $svm"
@@ -206,5 +206,33 @@ do
         do_plot comptimes.gpi "$bf ($t)" $data $plots/comptimes2/$bf-$t
     done
     echo done
+
+    #
+    # Plot NN vs GPU time comparisons
+    #
+    printf "  $bf GPU vs NN ... "
+    in_worst=$nn_outputs/$bf-simple-sca-float-b0-1
+    in_best=$nn_outputs/$bf-unroll4-vec-float-b0-1
+    in_best8=$nn_outputs/$bf-unroll4-vec-float-b0-8
+    in_gpu=$cl_outputs/$bf
+    worst='-'
+    best='-'
+    best8='-'
+    gpu='-'
+    test -f $in_worst && worst=$(awk "$NN_TIME" $in_worst)
+    test -f $in_best && best=$(awk "$NN_TIME" $in_best)
+    test -f $in_best8 && best8=$(awk "$NN_TIME" $in_best8)
+    test -f $in_gpu && gpu=$(awk "$NN_TIME" $in_gpu)
+    data=$plots/gputimes/table-$bf.txt
+    if :
+    then
+        echo "NN-worst  $worst"
+        echo "NN-best  $best"
+        echo "GPU  $gpu"
+        echo "NN-best8 $best8"
+    fi >$data
+    do_plot comptimes.gpi "$bf" $data $plots/gputimes/$bf
+    echo done
+
 done
 
