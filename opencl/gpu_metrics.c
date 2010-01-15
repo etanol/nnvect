@@ -115,6 +115,7 @@ int main ()
                         oclPrintDeviceInfoLong(devices[i], CL_DEVICE_GLOBAL_MEM_SIZE, "Global memory size");
                         oclPrintDeviceInfoLong(devices[i], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, "Global cache size");
                         oclPrintDeviceInfoLong(devices[i], CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, "Global cacheline size");
+                        oclPrintDeviceInfoInt(devices[i], CL_DEVICE_ADDRESS_BITS, "Address bits");
                         oclPrintDeviceInfoLong(devices[i], CL_DEVICE_LOCAL_MEM_SIZE, "Local memory size");
                         oclPrintDeviceInfoInt(devices[i], CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, "Required alignment");
                         oclPrintDeviceInfoInt(devices[i], CL_DEVICE_MEM_BASE_ADDR_ALIGN, "Alignment bits");
