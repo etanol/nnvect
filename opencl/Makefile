@@ -4,7 +4,7 @@ OPENCL_HEADER_PATH := /opt/sdk/opencl/OpenCL/common/inc
 CFLAGS ?= -O3 -fomit-frame-pointer
 
 # Mandatory compiler flags
-override CFLAGS  += -iquote .. -I$(OPENCL_HEADER_PATH)
+override CFLAGS  += -DALIGNMENT=4 -iquote .. -I$(OPENCL_HEADER_PATH)
 override LDFLAGS += -lm -lOpenCL
 
 PROGRAMS := gpu_metrics clnn

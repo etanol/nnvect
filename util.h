@@ -5,7 +5,9 @@
 #include <sys/time.h>
 
 /* Alignment utilities */
+#ifndef ALIGNMENT
 #define ALIGNMENT     16
+#endif
 #define PADDED(size)  (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
 
 /* Module interface */

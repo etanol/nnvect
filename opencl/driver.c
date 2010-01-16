@@ -1,20 +1,21 @@
 #include <getopt.h>
+#include <limits.h>
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gpu.h"
 #include "db.h"
 #include "util.h"
 #include "stats.h"
 
 #define KERNELFILE   "nn.cl"
-#define KERNELNAME   "nn"
 #define DEFAULT_RUNS  3
 
-static char OptString[] = "hk:o:p:r:";
+static char OptString[] = "ho:p:r:";
 
 static struct option LongOpts[] = {
         { "help",    no_argument,       NULL, 'h' },
-        { "kernel",  required_argument, NULL, 'k' },
         { "output",  required_argument, NULL, 'o' },
         { "program", required_argument, NULL, 'p' },
         { "runs",    required_argument, NULL, 'r' },
@@ -27,7 +28,6 @@ static void usage (const char *progname)
 "Usage: %s [options] dbfile\n\n"
 "Where possible options are:\n\n"
 "    -h, --help         This help.\n\n"
-"    -k, --kernel=NAME  Use kernel NAME instead of default (\"%s\").\n\n"
 "    -o, --output=FILE  Save the calculated results to FILE in order to\n"
 "                       compare them against valid solutions.\n\n"
 "    -p, --program=FILE Load the OpenCL kernel code from FILE.  By default\n"
@@ -39,16 +39,52 @@ static void usage (const char *progname)
 "NOTE: Just the common prefix of all the files needs to be specified as input.\n"
 "      The \".trn\", \".tst\", \".trn.info\" and \".tst.info\" suffixes are\n"
 "      added automatically and the corresponding files are assumed to reside\n"
-"      under the same path.\n\n", progname, KERNELNAME, KERNELFILE);
+"      under the same path.\n\n", progname, KERNELFILE);
 
         exit(EXIT_FAILURE);
 }
 
 
+static void transpose_and_pad (struct db *db, int padding)
+{
+        int i, ii, j;
+        int ncount;
+        int *nklass;
+        float *ndata;
+
+        if (db->count % padding != 0)
+        {
+                ncount = db->count + padding - db->count % padding;
+                nklass = xmalloc(ncount * sizeof(int));
+                memcpy(nklass, db->klass, db->count * sizeof(int));
+                for (i = db->count;  i < ncount;  i++)
+                        nklass[i] = INT_MAX;
+                free(db->klass);
+                db->klass = nklass;
+        }
+        else
+                ncount = db->count;
+
+        ndata = xmalloc(ncount * db->dimensions * db->typesize);
+        for (i = 0;  i < db->dimensions;  i++)
+        {
+                ii = i * ncount;
+                for (j = 0;  j < db->count;  j++)
+                        ndata[ii + j] = ((float *) db->data)[j * db->dimensions + i];
+                for (;  j < ncount;  j++)
+                        ndata[ii + j] = FLT_MAX;
+        }
+        free(db->data);
+        db->data = ndata;
+        db->count = ncount;
+}
+
+
 int main (int argc, char **argv)
 {
-        char *progname, *fullname, *dumpfile, *kernelfile, *kernelname;
+        char *progname, *fullname, *dumpfile, *kernelfile;
         struct db *test_db, *train_db;
+        int ocount;
         int i, hits, *result;
         int cmdopt, has_opts, r, runs;
         struct timestats *ts;
@@ -56,7 +92,6 @@ int main (int argc, char **argv)
         progname = argv[0];
         dumpfile = NULL;
         kernelfile = NULL;
-        kernelname = NULL;
         runs = DEFAULT_RUNS;
         has_opts = 1;
 
@@ -69,11 +104,6 @@ int main (int argc, char **argv)
                 {
                 case 'h':
                         usage(progname);
-                        break;
-                case 'k':
-                        if (kernelname != NULL)
-                                free(kernelname);
-                        kernelname = xstrcat(optarg, NULL);
                         break;
                 case 'o':
                         if (dumpfile != NULL)
@@ -110,8 +140,6 @@ int main (int argc, char **argv)
         } while (1);
         if (kernelfile == NULL)
                 kernelfile = KERNELFILE;
-        if (kernelname == NULL)
-                kernelname = KERNELNAME;
         argc -= optind;
         argv += optind;
         if (argc < 1)
@@ -125,12 +153,15 @@ int main (int argc, char **argv)
         printf("Loading %s\n\n", fullname);
         train_db = load_db(fullname, FLOAT, 0, 2, 0);
         free(fullname);
+        transpose_and_pad(train_db, 16);
         print_db_info(train_db);
 
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s\n\n", fullname);
         test_db = load_db(fullname, FLOAT, 0, 2, 0);
         free(fullname);
+        ocount = test_db->count;
+        transpose_and_pad(test_db, 64);
         print_db_info(test_db);
 
         if (test_db->dimensions != train_db->dimensions)
@@ -140,9 +171,9 @@ int main (int argc, char **argv)
 
         /* Prepare the GPU */
         printf("\nSetting up GPU\n");
-        init_gpu(kernelfile, kernelname);
+        init_gpu(kernelfile);
         printf("Feeding GPU with data\n\n");
-        send_nn_arguments(train_db, test_db);
+        prepare_invocations(train_db, test_db);
 
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
@@ -152,7 +183,7 @@ int main (int argc, char **argv)
                 printf("Run %d of %d ... ", r + 1, runs);
                 fflush(stdout);
                 start_run(ts);
-                execute_kernel();
+                invoke_kernels();
                 stop_run(ts);
                 t = get_last_run_time(ts);
                 printf("%lf s\n", t);
@@ -163,7 +194,7 @@ int main (int argc, char **argv)
 
         /* Measure accuracy */
         hits = 0;
-        for (i = 0;  i < test_db->count;  i++)
+        for (i = 0;  i < ocount;  i++)
                 if (test_db->klass[i] == result[i])
                         hits++;
         printf("\nClassification accuracy: %.2lf %%\n\n",
@@ -187,7 +218,7 @@ int main (int argc, char **argv)
                 f = fopen(dumpfile, "w");
                 if (f == NULL)
                         fatal("Could not open '%s'", dumpfile);
-                for (i = 0;  i < test_db->count;  i++)
+                for (i = 0;  i < ocount;  i++)
                         fprintf(f, "%d\n", result[i]);
                 fclose(f);
         }

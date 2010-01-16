@@ -16,23 +16,31 @@ struct _GPUData
         cl_device_id device;
         cl_command_queue queue;
         cl_program program;
-        cl_kernel kernel;
+        cl_kernel m_kernel;
+        cl_kernel r_kernel;
 
         cl_mem trdata;
         cl_mem trklasses;
         cl_mem data;
         cl_mem klasses;
+        cl_mem distances;
+        cl_mem indices;
+
+        size_t m_local[2];
+        size_t r_local[2];
+        size_t m_global[2];
+        size_t r_global[2];
 };
 
 static struct _GPUData GPU;
 
 
-void init_gpu (const char *filename, const char *kernelname)
+void init_gpu (const char *filename)
 {
         int fd, e;
         struct stat st;
         size_t filesize, sz;
-        char *data, *errors, buildflags[128];
+        char *data, *errors;
         cl_device_id *devices;
         cl_build_status status;
         cl_int ce;
@@ -69,8 +77,7 @@ void init_gpu (const char *filename, const char *kernelname)
                                                 &ce);  gpu_check(ce);
         /* Ignore errors in clBuildProgram() as they will be detected and
          * reported in more detail later */
-        snprintf(buildflags, 128, "-DBS_X=%d -DBS_Y=%d", BLOCKDIM_X, BLOCKDIM_Y);
-        clBuildProgram(GPU.program, 0, NULL, buildflags, NULL, NULL);
+        clBuildProgram(GPU.program, 0, NULL, NULL, NULL, NULL);
         do {
                 sleep(1);
                 ce = clGetProgramBuildInfo(GPU.program, GPU.device,
@@ -90,7 +97,8 @@ void init_gpu (const char *filename, const char *kernelname)
         }
 
         /* Create the corresponding kernel */
-        GPU.kernel = clCreateKernel(GPU.program, kernelname, &ce);  gpu_check(ce);
+        GPU.m_kernel = clCreateKernel(GPU.program, "distance_map", &ce);  gpu_check(ce);
+        GPU.r_kernel = clCreateKernel(GPU.program, "reduction", &ce);  gpu_check(ce);
 
         /* Unload the program source code */
         e = munmap(data, st.st_size);
@@ -102,7 +110,7 @@ void init_gpu (const char *filename, const char *kernelname)
 }
 
 
-void send_nn_arguments (struct db *trdb, struct db *db)
+void prepare_invocations (struct db *trdb, struct db *db)
 {
         cl_int e;
 
@@ -120,28 +128,51 @@ void send_nn_arguments (struct db *trdb, struct db *db)
                                         &e);  gpu_check(e);
         GPU.klasses = clCreateBuffer(GPU.context, CL_MEM_WRITE_ONLY,
                                       db->count * sizeof(int), NULL, &e);  gpu_check(e);
+        GPU.distances = clCreateBuffer(GPU.context, CL_MEM_READ_WRITE,
+                                       db->count * (trdb->count / 16) * sizeof(float),
+                                       NULL, &e);  gpu_check(e);
+        GPU.indices = clCreateBuffer(GPU.context, CL_MEM_READ_WRITE,
+                                     db->count * (trdb->count / 16) * sizeof(int),
+                                     NULL, &e);  gpu_check(e);
 
-        e = clSetKernelArg(GPU.kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 2, sizeof(cl_mem), &GPU.trdata);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 3, sizeof(cl_mem), &GPU.trklasses);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 4, sizeof(int), &db->count);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 5, sizeof(cl_mem), &GPU.data);  gpu_check(e);
-        e = clSetKernelArg(GPU.kernel, 6, sizeof(cl_mem), &GPU.klasses);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 2, sizeof(cl_mem), &GPU.trdata);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 3, sizeof(int), &db->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 5, sizeof(cl_mem), &GPU.data);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 6, sizeof(cl_mem), &GPU.distances);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 7, sizeof(cl_mem), &GPU.indices);  gpu_check(e);
+
+        GPU.m_local[0] = 16;
+        GPU.m_local[1] = 4;
+        GPU.m_global[0] = (db->count / 64) * 16;
+        GPU.m_global[1] = (trdb->count / 16) * 4;
+
+        e = clSetKernelArg(GPU.r_kernel, 0, sizeof(int), &trdb->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.r_kernel, 1, sizeof(int), &db->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.r_kernel, 2, sizeof(cl_mem), &GPU.distances);  gpu_check(e);
+        e = clSetKernelArg(GPU.r_kernel, 3, sizeof(cl_mem), &GPU.indices);  gpu_check(e);
+        e = clSetKernelArg(GPU.r_kernel, 4, sizeof(cl_mem), &GPU.trklasses);  gpu_check(e);
+        e = clSetKernelArg(GPU.r_kernel, 5, sizeof(cl_mem), &GPU.klasses);  gpu_check(e);
+
+        GPU.r_local[0] = 64;
+        GPU.r_local[1] = 1;
+        GPU.r_global[0] = db->count;
+        GPU.r_global[1] = 1;
+
 }
 
 
-void execute_kernel (void)
+void invoke_kernels (void)
 {
-        size_t local[2], global[2];
+        cl_event evt;
         cl_int e;
 
-        local[0] = global[0] = BLOCKDIM_X;
-        local[1] = BLOCKDIM_Y;
-        global[1] = BLOCKDIM_Y * 30;
-
-        e = clEnqueueNDRangeKernel(GPU.queue, GPU.kernel, 2, NULL, global,
-                                   local, 0, NULL, NULL);  gpu_check(e);
+        e = clEnqueueNDRangeKernel(GPU.queue, GPU.m_kernel, 2, NULL,
+                                   GPU.m_global, GPU.m_local, 0, NULL,
+                                   &evt);  gpu_check(e);
+        e = clEnqueueNDRangeKernel(GPU.queue, GPU.r_kernel, 2, NULL,
+                                   GPU.r_global, GPU.r_local, 1, &evt, NULL);  gpu_check(e);
         e = clFinish(GPU.queue);  gpu_check(e);
 }
 
@@ -165,13 +196,19 @@ void destroy_gpu (void)
                 clReleaseMemObject(GPU.data);
         if (GPU.klasses)
                 clReleaseMemObject(GPU.klasses);
-        if (GPU.kernel)
-                clReleaseKernel(GPU.kernel);
+        if (GPU.distances)
+                clReleaseMemObject(GPU.distances);
+        if (GPU.indices)
+                clReleaseMemObject(GPU.indices);
+        if (GPU.m_kernel)
+                clReleaseKernel(GPU.m_kernel);
+        if (GPU.r_kernel)
+                clReleaseKernel(GPU.r_kernel);
         if (GPU.program)
                 clReleaseProgram(GPU.program);
         if (GPU.queue)
                 clReleaseCommandQueue(GPU.queue);
-        if (GPU.kernel)
+        if (GPU.context)
                 clReleaseContext(GPU.context);
 }
 
