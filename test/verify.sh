@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export OMP_NUM_THREADS=1
+
 RFILE=res
 FPREFIX=fail
 FAILED=''
