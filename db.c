@@ -10,7 +10,6 @@
 #include <string.h>
 #include <ctype.h>
 
-
 struct file
 {
         int handle;
@@ -69,7 +68,7 @@ static void read_info (struct file *file, struct db *db)
          * order ever changes in the Python analyzer, it can also be changed
          * here */
         line = file->data;
-        db->count = (int) strtol(&line[9], &next, 10);
+        db->real_count = (int) strtol(&line[9], &next, 10);
         line = next + 1;
         db->real_dimensions = (int) strtol(&line[9], &next, 10);
         line = next + 1;
@@ -110,13 +109,13 @@ static void read_data (struct file *file, struct db *db)
         lc = 0;
 
         /* Each iteration parses a single line */
-        while (lc < db->count)
+        while (lc < db->real_count)
         {
                 while (*c == ' ' || *c == '\t')
                         c++;
                 db->klass[lc] = (int) strtol(c, &next, 10);
                 if (db->klass[lc] == 0 && c == next)
-                        fatal("Parsing index %d \"%10s...\"", lc, c);
+                        quit("Parsing index %d \"%10s...\"", lc, c);
                 c = next;
                 while (*c == ' ' || *c == '\t')
                         c++;
@@ -124,41 +123,44 @@ static void read_data (struct file *file, struct db *db)
                 {
                         dim = (int) strtol(c, &next, 10);
                         if (dim == 0 && c == next)
-                                fatal("Parsing dimension at %d \"%10s...\"",
-                                      dim, lc, c);
-                        i = lc * db->dimensions + (dim - 1);
+                                quit("Parsing dimension at %d \"%10s...\"",
+                                     dim, lc, c);
+                        if (db->transposed)
+                                i = (dim - 1) * db->count + lc;
+                        else
+                                i = lc * db->dimensions + (dim - 1);
                         c = next + 1;
                         switch (db->type)
                         {
                         case BYTE:
-                                ((char *) db->data)[i] = (char) strtol(c, &next, 10);
-                                if (((char *) db->data)[i] == 0 && c == next)
-                                        fatal("Parsing char value at %d, %d \"%10s...\"",
-                                              lc, dim, c);
+                                BYTE_DATA(db)[i] = (char) strtol(c, &next, 10);
+                                if (BYTE_DATA(db)[i] == 0 && c == next)
+                                        quit("Parsing char value at %d, %d \"%10s...\"",
+                                             lc, dim, c);
                                 break;
                         case SHORT:
-                                ((short *) db->data)[i] = (short) strtol(c, &next, 10);
-                                if (((short *) db->data)[i] == 0 && c == next)
-                                        fatal("Parsing short value at %d, %d \"%10s...\"",
-                                              lc, dim, c);
+                                SHORT_DATA(db)[i] = (short) strtol(c, &next, 10);
+                                if (SHORT_DATA(db)[i] == 0 && c == next)
+                                        quit("Parsing short value at %d, %d \"%10s...\"",
+                                             lc, dim, c);
                                 break;
                         case INT:
-                                ((int *) db->data)[i] = (int) strtol(c, &next, 10);
-                                if (((int *) db->data)[i] == 0 && c == next)
-                                        fatal("Parsing int value at %d, %d \"%10s...\"",
-                                              lc, dim, c);
+                                INT_DATA(db)[i] = (int) strtol(c, &next, 10);
+                                if (INT_DATA(db)[i] == 0 && c == next)
+                                        quit("Parsing int value at %d, %d \"%10s...\"",
+                                             lc, dim, c);
                                 break;
                         case FLOAT:
-                                ((float *) db->data)[i] = (float) strtod(c, &next);
-                                if (((float *) db->data)[i] == 0.0f && c == next)
-                                        fatal("Parsing float value at %d, %d \"%10s...\"",
-                                              lc, dim, c);
+                                FLOAT_DATA(db)[i] = (float) strtod(c, &next);
+                                if (FLOAT_DATA(db)[i] == 0.0f && c == next)
+                                        quit("Parsing float value at %d, %d \"%10s...\"",
+                                             lc, dim, c);
                                 break;
                         case DOUBLE:
-                                ((double *) db->data)[i] = strtod(c, &next);
-                                if (((double *) db->data)[i] == 0.0 && c == next)
-                                        fatal("Parsing double value at %d, %d \"%10s...\"",
-                                              lc, dim, c);
+                                DOUBLE_DATA(db)[i] = strtod(c, &next);
+                                if (DOUBLE_DATA(db)[i] == 0.0 && c == next)
+                                        quit("Parsing double value at %d, %d \"%10s...\"",
+                                             lc, dim, c);
                                 break;
                         }
                         c = next;
@@ -171,22 +173,16 @@ static void read_data (struct file *file, struct db *db)
 }
 
 
-/*
- * The padding type values can be:
- *
- *     0 ::= no padding
- *     1 ::= pad dimensions to ALIGNMENT bytes
- *     2 ::= pad dimensions to ALIGNMENT elements
- */
-struct db *load_db (const char *filename, enum valuetype type,
-                    int max_block_size, int padding_type, int want_distances)
+static struct db *prepare_db (const char *filename, enum valuetype type)
 {
         char *infoname;
-        int check_float, typesize, rowsize, distsize;
         struct db *db;
+        int check_float;
         struct file file;
 
         db = xmalloc(sizeof(struct db));
+        memset(db, 0, sizeof(struct db));
+        db->type = type;
 
         infoname = xstrcat(filename, ".info");
         open_file(infoname, &file);
@@ -195,30 +191,29 @@ struct db *load_db (const char *filename, enum valuetype type,
         free(infoname);
 
         check_float = 0;
-        typesize = distsize = rowsize = 0;
         switch (type)
         {
         case BYTE:
-                typesize = sizeof(char);
-                distsize = sizeof(unsigned int);
+                db->typesize = sizeof(char);
+                db->distsize = sizeof(unsigned int);
                 check_float = 1;
                 break;
         case SHORT:
-                typesize = sizeof(short);
-                distsize = sizeof(unsigned int);
+                db->typesize = sizeof(short);
+                db->distsize = sizeof(unsigned int);
                 check_float = 1;
                 break;
         case INT:
-                typesize = sizeof(int);
-                distsize = sizeof(unsigned int);
+                db->typesize = sizeof(int);
+                db->distsize = sizeof(unsigned int);
                 check_float = 1;
                 break;
         case FLOAT:
-                typesize = distsize = sizeof(float);
+                db->typesize = db->distsize = sizeof(float);
                 check_float = 0;
                 break;
         case DOUBLE:
-                typesize = distsize = sizeof(double);
+                db->typesize = db->distsize = sizeof(double);
                 check_float = 0;
                 break;
         }
@@ -226,32 +221,30 @@ struct db *load_db (const char *filename, enum valuetype type,
         if (check_float && db->has_floats)
                 quit("Database has floating point numbers but an integer type was requested");
 
-        switch (padding_type)
-        {
-        case 0:
-                rowsize = db->real_dimensions * typesize;
-                db->dimensions = db->real_dimensions;
-                db->data = xmalloc(db->count * rowsize);
-                break;
-        case 1:
-                rowsize = PADDED(db->real_dimensions * typesize);
-                db->dimensions = rowsize / typesize;
-                db->data = xmalloc_aligned(db->count * rowsize);
-                break;
-        case 2:
-                db->dimensions = PADDED(db->real_dimensions);
-                rowsize = db->dimensions * typesize;
-                db->data = xmalloc(db->count * rowsize);
-                break;
-        default:
-                quit("Invalid padding type");
-        }
+        return db;
+}
 
-        db->type = type;
-        db->typesize = typesize;
+
+struct db *load_db (const char *filename, enum valuetype type,
+                    int max_block_size, int row_alignment)
+{
+        int rowsize;
+        struct db *db;
+        struct file file;
+
+        db = prepare_db(filename, type);
+
+        db->count = db->real_count;
+        rowsize = db->real_dimensions * db->typesize;
+        if (row_alignment > 0 && rowsize % row_alignment > 0)
+                rowsize +=  row_alignment - (rowsize % row_alignment);
+        db->dimensions = rowsize / db->typesize;
+
+        db->data = xmalloc_aligned(db->count * rowsize, row_alignment);
         db->klass = xmalloc(db->count * sizeof(int));
-        memset(db->klass, 0, db->count * sizeof(int));
+        db->distance = xmalloc(db->count * db->distsize);
         memset(db->data, 0, db->count * rowsize);
+        memset(db->klass, 0, db->count * sizeof(int));
 
         db->wanted_block_size = max_block_size;
         if (max_block_size > 0 && db->count * rowsize > max_block_size)
@@ -259,11 +252,39 @@ struct db *load_db (const char *filename, enum valuetype type,
         else
                 db->block_items = 0;
 
-        if (want_distances)
-                db->distance = xmalloc(db->count * distsize);
-        else
-                db->distance = NULL;
+        db->transposed = 0;
+        open_file(filename, &file);
+        read_data(&file, db);
+        close_file(&file);
 
+        return db;
+}
+
+
+struct db *load_db_transposed (const char *filename, enum valuetype type,
+                               int chunks, int row_pad, int column_pad)
+{
+        struct db *db;
+        struct file file;
+
+        db = prepare_db(filename, type);
+
+        db->count = db->real_count;
+        if (row_pad > 0 && (db->real_count / chunks) % row_pad > 0)
+                db->count += chunks * (row_pad - (db->real_count / chunks) %
+                                                 row_pad);
+        db->dimensions = db->real_dimensions;
+        if (column_pad > 0 && db->real_dimensions % column_pad > 0)
+                db->dimensions += column_pad - (db->real_dimensions %
+                                                column_pad);
+
+        db->data = xmalloc(db->count * db->dimensions * db->typesize);
+        db->klass = xmalloc(db->count * sizeof(int));
+        db->distance = NULL;
+        memset(db->data, 0, db->count * db->dimensions * db->typesize);
+        memset(db->klass, 0, db->count * sizeof(int));
+
+        db->transposed = 1;
         open_file(filename, &file);
         read_data(&file, db);
         close_file(&file);

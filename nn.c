@@ -32,27 +32,23 @@ void clear_distances (struct db *db)
 {
         int i;
 
-        if (db->distance == NULL)
-                return;
-
         switch (db->type)
         {
         case BYTE:
         case SHORT:
         case INT:
                 for (i = 0;  i < db->count;  i++)
-                        ((unsigned int *) db->distance)[i] = UINT_MAX;
+                        UINT_DISTANCE(db)[i] = UINT_MAX;
                 break;
         case FLOAT:
                 for (i = 0;  i < db->count;  i++)
-                        ((float *) db->distance)[i] = FLT_MAX;
+                        FLOAT_DISTANCE(db)[i] = FLT_MAX;
                 break;
         case DOUBLE:
                 for (i = 0;  i < db->count;  i++)
-                        ((double *) db->distance)[i] = DBL_MAX;
+                        DOUBLE_DISTANCE(db)[i] = DBL_MAX;
                 break;
         }
-
 }
 
 

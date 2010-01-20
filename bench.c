@@ -92,7 +92,7 @@ int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
         int cmdopt, has_opts, want_scalar, padding_type, r, runs, i, hits, k;
-        int block_limit, test_block_limit;
+        int block_limit, test_block_limit, mem_alignment;
         int *original;
         enum valuetype type;
         struct db *db, *train_db;
@@ -103,6 +103,7 @@ int main (int argc, char **argv)
         dumpfile = NULL;
         block_limit = 0;
         test_block_limit = 0;
+        mem_alignment = 16;
         runs = DEFAULT_RUNS;
         type = FLOAT;
         typelabel = NULL;
@@ -150,7 +151,7 @@ int main (int argc, char **argv)
                         else if (k > 1)
                         {
                                 want_scalar = 1;
-                                padding_type = 0;
+                                mem_alignment = 0;
                         }
                         break;
                 case 'o':
@@ -173,7 +174,7 @@ int main (int argc, char **argv)
                         break;
                 case 's':
                         want_scalar = 1;
-                        padding_type = 0;
+                        mem_alignment = 0;
                         break;
                 case 't':
                         strtolower(optarg);
@@ -221,7 +222,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        train_db = load_db(fullname, type, block_limit, padding_type, 0);
+        train_db = load_db(fullname, type, block_limit, mem_alignment);
         free(fullname);
         if (train_db->block_items > 0)
                 train_db->block_items = adjusted_block_count(train_db->block_items);
@@ -230,7 +231,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(fullname, type, test_block_limit, padding_type, 1);
+        db = load_db(fullname, type, test_block_limit, mem_alignment);
         free(fullname);
         print_db_info(db);
         printf("\n");

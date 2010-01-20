@@ -45,46 +45,10 @@ static void usage (const char *progname)
 }
 
 
-static void transpose_and_pad (struct db *db, int padding)
-{
-        int i, ii, j;
-        int ncount;
-        int *nklass;
-        float *ndata;
-
-        if (db->count % padding != 0)
-        {
-                ncount = db->count + padding - db->count % padding;
-                nklass = xmalloc(ncount * sizeof(int));
-                memcpy(nklass, db->klass, db->count * sizeof(int));
-                for (i = db->count;  i < ncount;  i++)
-                        nklass[i] = INT_MAX;
-                free(db->klass);
-                db->klass = nklass;
-        }
-        else
-                ncount = db->count;
-
-        ndata = xmalloc(ncount * db->dimensions * db->typesize);
-        for (i = 0;  i < db->dimensions;  i++)
-        {
-                ii = i * ncount;
-                for (j = 0;  j < db->count;  j++)
-                        ndata[ii + j] = ((float *) db->data)[j * db->dimensions + i];
-                for (;  j < ncount;  j++)
-                        ndata[ii + j] = FLT_MAX;
-        }
-        free(db->data);
-        db->data = ndata;
-        db->count = ncount;
-}
-
-
 int main (int argc, char **argv)
 {
         char *progname, *fullname, *dumpfile, *kernelfile;
         struct db *test_db, *train_db;
-        int ocount;
         int i, hits, *result;
         int cmdopt, has_opts, r, runs;
         struct timestats *ts;
@@ -151,17 +115,14 @@ int main (int argc, char **argv)
         /* Load the databases */
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s\n\n", fullname);
-        train_db = load_db(fullname, FLOAT, 0, 2, 0);
+        train_db = load_db_transposed(fullname, FLOAT, 1, 16, 4);
         free(fullname);
-        transpose_and_pad(train_db, 16);
         print_db_info(train_db);
 
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s\n\n", fullname);
-        test_db = load_db(fullname, FLOAT, 0, 2, 0);
+        test_db = load_db_transposed(fullname, FLOAT, 1, 64, 4);
         free(fullname);
-        ocount = test_db->count;
-        transpose_and_pad(test_db, 64);
         print_db_info(test_db);
 
         if (test_db->dimensions != train_db->dimensions)
@@ -194,7 +155,7 @@ int main (int argc, char **argv)
 
         /* Measure accuracy */
         hits = 0;
-        for (i = 0;  i < ocount;  i++)
+        for (i = 0;  i < test_db->real_count;  i++)
                 if (test_db->klass[i] == result[i])
                         hits++;
         printf("\nClassification accuracy: %.2lf %%\n\n",
@@ -218,7 +179,7 @@ int main (int argc, char **argv)
                 f = fopen(dumpfile, "w");
                 if (f == NULL)
                         fatal("Could not open '%s'", dumpfile);
-                for (i = 0;  i < ocount;  i++)
+                for (i = 0;  i < test_db->real_count;  i++)
                         fprintf(f, "%d\n", result[i]);
                 fclose(f);
         }

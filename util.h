@@ -4,20 +4,15 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-/* Alignment utilities */
-#ifndef ALIGNMENT
-#define ALIGNMENT     16
-#endif
-#define PADDED(size)  (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
-
 /* Module interface */
-#define warning(...)        print_message(__FILE__, __LINE__, 1, __VA_ARGS__)
-#define error(...)          print_message(__FILE__, __LINE__, 2, __VA_ARGS__)
-#define quit(...)           print_message(__FILE__, __LINE__, 3, __VA_ARGS__)
-#define fatal(...)          print_message(__FILE__, __LINE__, 4, __VA_ARGS__)
-#define xmalloc(s)          allocate_memory(__FILE__, __LINE__, 0, (s))
-#define xmalloc_aligned(s)  allocate_memory(__FILE__, __LINE__, ALIGNMENT, (s))
-#define xstrcat(a, b)       string_concat(__FILE__, __LINE__, (a), (b))
+#define warning(...)  print_message(__FILE__, __LINE__, 1, __VA_ARGS__)
+#define error(...)    print_message(__FILE__, __LINE__, 2, __VA_ARGS__)
+#define quit(...)     print_message(__FILE__, __LINE__, 3, __VA_ARGS__)
+#define fatal(...)    print_message(__FILE__, __LINE__, 4, __VA_ARGS__)
+
+#define xmalloc(s)             allocate_memory(__FILE__, __LINE__, 0, (s))
+#define xmalloc_aligned(s, a)  allocate_memory(__FILE__, __LINE__, (a), (s))
+#define xstrcat(a, b)          string_concat(__FILE__, __LINE__, (a), (b))
 
 /* Debugging support */
 #ifdef DEBUG
