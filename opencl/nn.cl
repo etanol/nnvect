@@ -25,9 +25,9 @@ void accum (float tst, __local float *trn, float *dist)
 
 
 __kernel
-void distance_map (int dimensions, int trcount, __global float *trdata,
-                   int count, __global float *data,
-                    __global float *distances, __global int *indices)
+void distance_map (int dimensions, int trcount_real, int trcount,
+                   __global float *trdata, int count, __global float *data,
+                   __global float *distances, __global int *indices)
 {
         int bx = (GX / 16) * 64;
         int by = (GY / 4) * 16;
@@ -45,9 +45,9 @@ void distance_map (int dimensions, int trcount, __global float *trdata,
         for (i = 0;  i < dimensions;  i += 4)
         {
                 tst[0] = data[0 * count];
-                tst[2] = data[1 * count];
-                tst[3] = data[2 * count];
-                tst[4] = data[3 * count];
+                tst[1] = data[1 * count];
+                tst[2] = data[2 * count];
+                tst[3] = data[3 * count];
                 trn[Y][X] = trdata[0];
                 barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -64,7 +64,7 @@ void distance_map (int dimensions, int trcount, __global float *trdata,
         min = MAXFLOAT;
         idx = -1;
         for (i = 0;  i < 16;  i++)
-                if (dist[i] < min)
+                if (by + i < trcount_real && dist[i] < min)
                 {
                         min = dist[i];
                         idx = i;

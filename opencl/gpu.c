@@ -136,9 +136,10 @@ void prepare_invocations (struct db *trdb, struct db *db)
                                      NULL, &e);  gpu_check(e);
 
         e = clSetKernelArg(GPU.m_kernel, 0, sizeof(int), &db->dimensions);  gpu_check(e);
-        e = clSetKernelArg(GPU.m_kernel, 1, sizeof(int), &trdb->count);  gpu_check(e);
-        e = clSetKernelArg(GPU.m_kernel, 2, sizeof(cl_mem), &GPU.trdata);  gpu_check(e);
-        e = clSetKernelArg(GPU.m_kernel, 3, sizeof(int), &db->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 1, sizeof(int), &trdb->real_count);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 2, sizeof(int), &trdb->count);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 3, sizeof(cl_mem), &GPU.trdata);  gpu_check(e);
+        e = clSetKernelArg(GPU.m_kernel, 4, sizeof(int), &db->count);  gpu_check(e);
         e = clSetKernelArg(GPU.m_kernel, 5, sizeof(cl_mem), &GPU.data);  gpu_check(e);
         e = clSetKernelArg(GPU.m_kernel, 6, sizeof(cl_mem), &GPU.distances);  gpu_check(e);
         e = clSetKernelArg(GPU.m_kernel, 7, sizeof(cl_mem), &GPU.indices);  gpu_check(e);
