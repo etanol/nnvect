@@ -50,7 +50,7 @@ int main (int argc, char **argv)
         char *progname, *fullname, *dumpfile, *kernelfile;
         struct db *test_db, *train_db;
         int i, hits, *result;
-        int cmdopt, has_opts, r, runs;
+        int cmdopt, has_opts, r, runs, devices;
         struct timestats *ts;
 
         progname = argv[0];
@@ -112,6 +112,10 @@ int main (int argc, char **argv)
                 usage(progname);
         }
 
+        /* Prepare the GPU */
+        printf("Setting up GPU\n\n");
+        devices = init_gpu(kernelfile);
+
         /* Load the databases */
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s\n\n", fullname);
@@ -121,7 +125,7 @@ int main (int argc, char **argv)
 
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s\n\n", fullname);
-        test_db = load_db_transposed(fullname, FLOAT, 1, 64, 4);
+        test_db = load_db_transposed(fullname, FLOAT, devices, 64, 4);
         free(fullname);
         print_db_info(test_db);
 
@@ -130,10 +134,7 @@ int main (int argc, char **argv)
                      train_db->dimensions);
         result = xmalloc(test_db->count * sizeof(int));
 
-        /* Prepare the GPU */
-        printf("\nSetting up GPU\n");
-        init_gpu(kernelfile);
-        printf("Feeding GPU with data\n\n");
+        printf("\nFeeding GPU with data\n\n");
         prepare_invocations(train_db, test_db);
 
         ts = prepare_stats(runs);

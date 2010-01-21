@@ -9,7 +9,7 @@ struct db;
                                gpu_fatal(__FILE__, __LINE__, val)
 
 void  gpu_fatal           (const char *, int, cl_int);
-void  init_gpu            (const char *);
+int   init_gpu            (const char *);
 void  prepare_invocations (struct db *, struct db *);
 void  invoke_kernels      (void);
 void  get_nn_result       (int, void *);

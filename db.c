@@ -102,9 +102,11 @@ static void read_info (struct file *file, struct db *db)
 static void read_data (struct file *file, struct db *db)
 {
         char *c, *next;
+        int b, blc, bs;  /* Only for transposed loads */
         int dim, i;
         int lc;  /* Line Count so far */
 
+        bs = db->block_items * db->dimensions;
         c = file->data;
         lc = 0;
 
@@ -126,7 +128,12 @@ static void read_data (struct file *file, struct db *db)
                                 quit("Parsing dimension at %d \"%10s...\"",
                                      dim, lc, c);
                         if (db->transposed)
-                                i = (dim - 1) * db->count + lc;
+                        {
+                                b = lc / db->block_items;
+                                blc = lc - b * db->block_items;
+                                i = (b * bs) +
+                                    ((dim - 1) * db->block_items + blc);
+                        }
                         else
                                 i = lc * db->dimensions + (dim - 1);
                         c = next + 1;
@@ -283,6 +290,8 @@ struct db *load_db_transposed (const char *filename, enum valuetype type,
         db->distance = NULL;
         memset(db->data, 0, db->count * db->dimensions * db->typesize);
         memset(db->klass, 0, db->count * sizeof(int));
+
+        db->block_items = db->count / chunks;
 
         db->transposed = 1;
         open_file(filename, &file);
