@@ -65,6 +65,18 @@ knn_test()
 }
 
 
+#
+# Test function for OpenCL 1-NN.  Arguments are:
+#
+#     $1 --> test data to load and use
+#
+ocl_test()
+{
+    ../opencl/clnn --program=../opencl/nn.cl --output=$RFILE $1 >/dev/null 2>&1
+    check clnn $1 float gpu
+}
+
+
 rm -f $FPREFIX-*
 
 echo "====  BUILDING  ===="
@@ -83,6 +95,8 @@ knn_test 2 basic
 knn_test 3 large
 knn_test 5 large
 knn_test 7 large
+ocl_test basic
+ocl_test large
 echo
 
 if [ -n "$FAILED" ]
