@@ -33,7 +33,7 @@ int main (int argc, char **argv)
 
         fullname = xstrcat(argv[1], ".trn");
         printf("Loading training data (%s)\n", fullname);
-        db = load_db(fullname, FLOAT, 0, 0, 0);
+        db = load_db(fullname, FLOAT, 0, 0);
         free(fullname);
 
         fullname = xstrcat(argv[2], ".trn");
