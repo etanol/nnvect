@@ -264,18 +264,6 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
 }
 
 
-void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
-                   int *trklass, int count, int blockcount, float *data,
-                   int *klass, float *distance)
-{
-
-        for (n = 0;  n < count;  n++)
-        {
-                datum = _mm_load_
-        }
-}
-
-
 void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdata,
                     int *trklass, int count, int blockcount, double *data,
                     int *klass, double *distance)

@@ -222,8 +222,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".trn");
         printf("Loading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-//        train_db = load_db(fullname, type, block_limit, mem_alignment);
-        train_db = load_db_transposed(fullname, type, 1, 4, 0);
+        train_db = load_db(fullname, type, block_limit, mem_alignment);
         free(fullname);
         if (train_db->block_items > 0)
                 train_db->block_items = adjusted_block_count(train_db->block_items);
@@ -232,8 +231,7 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-//        db = load_db(fullname, type, test_block_limit, mem_alignment);
-        db = load_db_transposed(fullname, type, 1, 4, 0);
+        db = load_db(fullname, type, test_block_limit, mem_alignment);
         free(fullname);
         print_db_info(db);
         printf("\n");
