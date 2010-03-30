@@ -81,6 +81,7 @@ rm -f $FPREFIX-*
 
 echo "====  BUILDING  ===="
 make -C ..
+make -C ../opencl
 
 echo
 echo
