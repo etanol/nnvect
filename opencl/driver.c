@@ -8,6 +8,7 @@
 #include "db.h"
 #include "util.h"
 #include "stats.h"
+#include "card.h"
 
 #define KERNELFILE   "nn.cl"
 #define DEFAULT_RUNS  3
@@ -21,6 +22,7 @@ static struct option LongOpts[] = {
         { "runs",    required_argument, NULL, 'r' },
         { NULL,      0,                 NULL, 0   }
 };
+
 
 static void usage (const char *progname)
 {
@@ -42,6 +44,15 @@ static void usage (const char *progname)
 "      under the same path.\n\n", progname, KERNELFILE);
 
         exit(EXIT_FAILURE);
+}
+
+
+static inline double ncs (struct db *train, struct db *test, double secs)
+{
+        debug("Dividing %lf / %lf", (secs * GPU_HZ), (double) test->dimensions *
+                                                     test->count * train->count);
+        return (secs * GPU_HZ) / ((double) test->dimensions * test->count *
+                                  train->count);
 }
 
 
@@ -148,7 +159,7 @@ int main (int argc, char **argv)
                 invoke_kernels();
                 stop_run(ts);
                 t = get_last_run_time(ts);
-                printf("%lf s\n", t);
+                printf("%lf s  (%.04lf NCs)\n", t, ncs(train_db, test_db, t));
         }
 
         get_nn_result(test_db->count * sizeof(int), result);
@@ -168,9 +179,12 @@ int main (int argc, char **argv)
 
                 calculate_stats(ts, &sts);
                 printf("Timing statisticis\n\n");
-                printf("- Minimum time: %lf s\n", sts.minimum);
-                printf("- Maximum time: %lf s\n", sts.maximum);
-                printf("- Average time: %lf s\n", sts.mean);
+                printf("- Minimum time: %lf s  (%.04lf NCs)\n", sts.minimum,
+                       ncs(train_db, test_db, sts.minimum));
+                printf("- Maximum time: %lf s  (%.04lf NCs)\n", sts.maximum,
+                       ncs(train_db, test_db, sts.maximum));
+                printf("- Average time: %lf s  (%.04lf NCs)\n", sts.mean,
+                       ncs(train_db, test_db, sts.mean));
                 printf("- Standard deviation: %lf s\n\n", sts.deviation);
         }
         else

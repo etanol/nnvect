@@ -3,6 +3,7 @@
 #include "nn.h"
 #include "knn.h"
 #include "stats.h"
+#include "machine.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -78,19 +79,18 @@ static void strtolower (char *s)
 }
 
 
-static inline double mops (struct db *train, struct db *test, double secs)
+static inline double ncs (struct db *train, struct db *test, double secs)
 {
-        debug("Dividing %lf / %lf",
-              3.0 * test->dimensions * test->count * train->count,
-              secs * 1.0e6);
-        return (3.0 * test->dimensions * test->count * train->count) /
-               (secs * 1.0e6);
+        debug("Dividing %lf / %lf", (secs * CPU_HZ), (double) test->dimensions *
+                                                     test->count * train->count);
+        return (secs * CPU_HZ) / ((double) test->dimensions * test->count *
+                                  train->count);
 }
 
 
 int main (int argc, char **argv)
 {
-        char *progname, *fullname, *dumpfile, *typelabel, *mops_label;
+        char *progname, *fullname, *dumpfile, *typelabel;
         int cmdopt, has_opts, want_scalar, padding_type, r, runs, i, hits, k;
         int block_limit, test_block_limit, mem_alignment;
         int *original;
@@ -107,7 +107,6 @@ int main (int argc, char **argv)
         runs = DEFAULT_RUNS;
         type = FLOAT;
         typelabel = NULL;
-        mops_label = "MFLOPS";
         want_scalar = 0;
         padding_type = 1;
         has_opts = 1;
@@ -194,10 +193,6 @@ int main (int argc, char **argv)
                         if (typelabel != NULL)
                                 free(typelabel);
                         typelabel = xstrcat(optarg, NULL);
-                        if (type == FLOAT || type == DOUBLE)
-                                mops_label = "MFLOPS";
-                        else
-                                mops_label = "MOPS";
                         break;
                 case '?':
                         fputs("\n", stderr);
@@ -269,8 +264,7 @@ int main (int argc, char **argv)
                         stop_run(ts);
                 }
                 t = get_last_run_time(ts);
-                printf("%lf s  (%.03lf %s)\n", t, mops(train_db, db, t),
-                       mops_label);
+                printf("%lf s  (%.04lf NCs)\n", t, ncs(train_db, db, t));
         }
         if (k > 1)
         {
@@ -293,12 +287,12 @@ int main (int argc, char **argv)
 
                 calculate_stats(ts, &sts);
                 printf("Timing statistics\n\n");
-                printf("- Minimum time: %lf s  (%.03lf %s)\n", sts.minimum,
-                       mops(train_db, db, sts.minimum), mops_label);
-                printf("- Maximum time: %lf s  (%.03lf %s)\n", sts.maximum,
-                       mops(train_db, db, sts.maximum), mops_label);
-                printf("- Average time: %lf s  (%.03lf %s)\n", sts.mean,
-                       mops(train_db, db, sts.mean), mops_label);
+                printf("- Minimum time: %lf s  (%.04lf NCs)\n", sts.minimum,
+                       ncs(train_db, db, sts.minimum));
+                printf("- Maximum time: %lf s  (%.04lf NCs)\n", sts.maximum,
+                       ncs(train_db, db, sts.maximum));
+                printf("- Average time: %lf s  (%.04lf NCs)\n", sts.mean,
+                       ncs(train_db, db, sts.mean));
                 printf("- Standard deviation: %lf s\n\n", sts.deviation);
         }
         else

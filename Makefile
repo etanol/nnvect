@@ -22,3 +22,8 @@ unroll4_SOURCES := $(common_sources) nnsca-unroll4.c nnvec-unroll4.c
 
 include auto.mk
 
+objects += machine.h
+bench.o: machine.h
+machine.h: tools/frequency.sh
+	@echo " Generating $@" && ./tools/frequency.sh $@
+
