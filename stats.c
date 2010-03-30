@@ -12,6 +12,7 @@ struct timestats
         int runs;
         int current;
         struct timeval reference;
+        double partial;
         double *measure;
 };
 
@@ -37,8 +38,24 @@ struct timestats *prepare_stats (int runs)
 
 void start_run (struct timestats *ts)
 {
-        if (ts->current < ts->runs)
-                gettimeofday(&ts->reference, NULL);
+        ts->partial = 0.0;
+        gettimeofday(&ts->reference, NULL);
+}
+
+
+void pause_run (struct timestats *ts)
+{
+        struct timeval t;
+
+        gettimeofday(&t, NULL);
+        ts->partial += elapsed_time(&ts->reference, &t);
+        debug("Partial %d = %lf secs", ts->current, ts->partial);
+}
+
+
+void continue_run (struct timestats *ts)
+{
+        gettimeofday(&ts->reference, NULL);
 }
 
 
@@ -46,13 +63,15 @@ void stop_run (struct timestats *ts)
 {
         struct timeval t;
 
-        if (ts->current < ts->runs)
-        {
-                gettimeofday(&t, NULL);
-                ts->measure[ts->current] = elapsed_time(&ts->reference, &t);
-                debug("Measure %d = %lf secs", ts->current, ts->measure[ts->current]);
-                ts->current++;
-        }
+        if (ts->current >= ts->runs)
+                warning("Maximum number of runs reached (%d >= %d), skipping",
+                        ts->current, ts->runs);
+
+        gettimeofday(&t, NULL);
+        ts->measure[ts->current] = elapsed_time(&ts->reference, &t) +
+                                   ts->partial;
+        debug("Measure %d = %lf secs", ts->current, ts->measure[ts->current]);
+        ts->current++;
 }
 
 

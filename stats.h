@@ -15,6 +15,8 @@ struct stats
 
 struct timestats *prepare_stats     (int);
 void              start_run         (struct timestats *);
+void              pause_run         (struct timestats *);
+void              continue_run      (struct timestats *);
 void              stop_run          (struct timestats *);
 double            get_last_run_time (struct timestats *);
 void              calculate_stats   (struct timestats *, struct stats *);
