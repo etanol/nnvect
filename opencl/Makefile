@@ -19,7 +19,7 @@ objects += card.h
 driver.o: card.h
 card.h: gpu_metrics
 	@echo " Generating $@" && \
-	hz=$$(./gpu_metrics|awk '$$2=="MHz"{printf "%f",$$4*1000000;exit}') && \
+	hz=$$(./gpu_metrics|awk '$$2=="MHz"{printf "%d",$$4*1000000;exit}') && \
 	{ \
 		echo "/* Automatically generated, do not edit */" ; \
 		echo ; \
