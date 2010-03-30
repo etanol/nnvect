@@ -14,13 +14,6 @@
 #define FLOAT_DISTANCE(db)   ((float *)        (db)->distance)
 #define UINT_DISTANCE(db)    ((unsigned int *) (db)->distance)
 
-enum
-{
-        NO_PADDING = 0,
-        PAD_BYTES,
-        PAD_ELEMENTS
-};
-
 struct db
 {
         enum valuetype type;
