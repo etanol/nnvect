@@ -95,7 +95,7 @@ int main (int argc, char **argv)
         int block_limit, test_block_limit, mem_alignment;
         int *original;
         enum valuetype type;
-        struct db *db, *train_db;
+        struct db *test_db, *train_db;
         struct timestats *ts;
         struct nbhood *nbh;
 
@@ -226,21 +226,21 @@ int main (int argc, char **argv)
         fullname = xstrcat(argv[0], ".tst");
         printf("\nLoading %s as %ss\n\n", fullname,
                (typelabel == NULL ? "float" : typelabel));
-        db = load_db(fullname, type, test_block_limit, mem_alignment);
+        test_db = load_db(fullname, type, test_block_limit, mem_alignment);
         free(fullname);
-        print_db_info(db);
+        print_db_info(test_db);
         printf("\n");
 
-        if (db->dimensions != train_db->dimensions)
-                quit("Dimensions do not match (%d != %d)", db->dimensions,
+        if (test_db->dimensions != train_db->dimensions)
+                quit("Dimensions do not match (%d != %d)", test_db->dimensions,
                       train_db->dimensions);
         if (k > 1)
-                nbh = create_neighbourhood(k, db);
+                nbh = create_neighbourhood(k, test_db);
 
         /* Save original results for accuracy testing */
-        original = xmalloc(sizeof(int) * db->count);
-        memcpy(original, db->klass, sizeof(int) * db->count);
-        memset(db->klass, 0, sizeof(int) * db->count);
+        original = xmalloc(sizeof(int) * test_db->count);
+        memcpy(original, test_db->klass, sizeof(int) * test_db->count);
+        memset(test_db->klass, 0, sizeof(int) * test_db->count);
 
         ts = prepare_stats(runs);
         for (r = 0;  r < runs;  r++)
@@ -251,35 +251,35 @@ int main (int argc, char **argv)
                 fflush(stdout);
                 if (k > 1)
                 {
-                        clear_neighbourhood(k, db, nbh);
+                        clear_neighbourhood(k, test_db, nbh);
                         start_run(ts);
-                        knn(k, type, train_db, db, nbh);
+                        knn(k, type, train_db, test_db, nbh);
                         stop_run(ts);
                 }
                 else
                 {
-                        clear_distances(db);
+                        clear_distances(test_db);
                         start_run(ts);
-                        nn(type, want_scalar, train_db, db);
+                        nn(type, want_scalar, train_db, test_db);
                         stop_run(ts);
                 }
                 t = get_last_run_time(ts);
-                printf("%lf s  (%.04lf NCs)\n", t, ncs(train_db, db, t));
+                printf("%lf s  (%.04lf NCs)\n", t, ncs(train_db, test_db, t));
         }
         if (k > 1)
         {
-                classify(k, db, nbh);
+                classify(k, test_db, nbh);
                 free_neighbourhood(nbh);
         }
 
         /* Measure accuracy */
         hits = 0;
-        for (i = 0;  i < db->count;  i++)
-                if (db->klass[i] == original[i])
+        for (i = 0;  i < test_db->count;  i++)
+                if (test_db->klass[i] == original[i])
                         hits++;
         free(original);
         printf("\nClassification accuracy: %.2lf %%\n\n",
-               (100.0 * hits) / db->count);
+               (100.0 * hits) / test_db->count);
 
         if (dumpfile == NULL)
         {
@@ -288,11 +288,11 @@ int main (int argc, char **argv)
                 calculate_stats(ts, &sts);
                 printf("Timing statistics\n\n");
                 printf("- Minimum time: %lf s  (%.04lf NCs)\n", sts.minimum,
-                       ncs(train_db, db, sts.minimum));
+                       ncs(train_db, test_db, sts.minimum));
                 printf("- Maximum time: %lf s  (%.04lf NCs)\n", sts.maximum,
-                       ncs(train_db, db, sts.maximum));
+                       ncs(train_db, test_db, sts.maximum));
                 printf("- Average time: %lf s  (%.04lf NCs)\n", sts.mean,
-                       ncs(train_db, db, sts.mean));
+                       ncs(train_db, test_db, sts.mean));
                 printf("- Standard deviation: %lf s\n\n", sts.deviation);
         }
         else
@@ -302,13 +302,13 @@ int main (int argc, char **argv)
                 f = fopen(dumpfile, "w");
                 if (f == NULL)
                         fatal("Could not open %s", dumpfile);
-                for (i = 0;  i < db->count;  i++)
-                        fprintf(f, "%d\n", db->klass[i]);
+                for (i = 0;  i < test_db->count;  i++)
+                        fprintf(f, "%d\n", test_db->klass[i]);
                 fclose(f);
         }
 
         free_db(train_db);
-        free_db(db);
+        free_db(test_db);
         return EXIT_SUCCESS;
 }
 
