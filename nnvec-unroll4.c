@@ -25,7 +25,7 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
         short sdist2[8] __attribute__((aligned(16)));
         short sdist3[8] __attribute__((aligned(16)));
         short sdist4[8] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec1, tvec2, tvec3, tvec4;
         __m128i tmp1, tmp2, tmp3, tmp4;
         __m128i mask1, mask2, mask3, mask4;
@@ -41,7 +41,7 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                                tbn + trblockcount : trcount);
                         tbcU = tbc & ~0x03;
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti1, ti2, ti3, ti4, \
+                                min_distance, cl, tn, ti1, ti2, ti3, ti4, \
                                 dist1, dist2, dist3, dist4, d, vec, tvec1, \
                                 tvec2, tvec3, tvec4, tmp1, tmp2, tmp3, tmp4, \
                                 mask1, mask2, mask3, mask4, sdist1, sdist2, \
@@ -51,7 +51,6 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbcU;  tn += 4)
                                 {
                                         ti1 = tn * dimensions;
@@ -107,25 +106,21 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                         if (sdist2[0] < min_distance)
                                         {
                                                 min_distance = sdist2[0];
                                                 cl = trklass[tn + 1];
-                                                idx = tn + 1;
                                         }
                                         if (sdist3[0] < min_distance)
                                         {
                                                 min_distance = sdist3[0];
                                                 cl = trklass[tn + 2];
-                                                idx = tn + 2;
                                         }
                                         if (sdist4[0] < min_distance)
                                         {
                                                 min_distance = sdist4[0];
                                                 cl = trklass[tn + 3];
-                                                idx = tn + 3;
                                         }
                                 }
                                 for (;  tn < tbc;  tn++)
@@ -150,7 +145,6 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -173,7 +167,7 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
         int sdist2[4] __attribute__((aligned(16)));
         int sdist3[4] __attribute__((aligned(16)));
         int sdist4[4] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec1, tvec2, tvec3, tvec4;
         __m128i tmp1, tmp2, tmp3, tmp4;
         __m128i dist1, dist2, dist3, dist4;
@@ -188,7 +182,7 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                                tbn + trblockcount : trcount);
                         tbcU = tbc & ~0x03;
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti1, ti2, ti3, ti4, \
+                                min_distance, cl, tn, ti1, ti2, ti3, ti4, \
                                 dist1, dist2, dist3, dist4, d, vec, tvec1, \
                                 tvec2, tvec3, tvec4, tmp1, tmp2, tmp3, tmp4, \
                                 sdist1, sdist2, sdist3, sdist4)
@@ -197,7 +191,6 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbcU;  tn += 4)
                                 {
                                         ti1 = tn * dimensions;
@@ -241,25 +234,21 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                         if (sdist2[0] < min_distance)
                                         {
                                                 min_distance = sdist2[0];
                                                 cl = trklass[tn + 1];
-                                                idx = tn + 1;
                                         }
                                         if (sdist3[0] < min_distance)
                                         {
                                                 min_distance = sdist3[0];
                                                 cl = trklass[tn + 2];
-                                                idx = tn + 2;
                                         }
                                         if (sdist4[0] < min_distance)
                                         {
                                                 min_distance = sdist4[0];
                                                 cl = trklass[tn + 3];
-                                                idx = tn + 3;
                                         }
                                 }
                                 for (;  tn < tbc;  tn++)
@@ -281,7 +270,6 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -305,7 +293,7 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
         int sdist2[4] __attribute__((aligned(16)));
         int sdist3[4] __attribute__((aligned(16)));
         int sdist4[4] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec1, tvec2, tvec3, tvec4;
         __m128i tmp1, tmp2, tmp3, tmp4;
         __m128i dist1, dist2, dist3, dist4;
@@ -320,7 +308,7 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                                tbn + trblockcount : trcount);
                         tbcU = tbc & ~0x03;
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti1, ti2, ti3, ti4, \
+                                min_distance, cl, tn, ti1, ti2, ti3, ti4, \
                                 dist1, dist2, dist3, dist4, d, vec, tvec1, \
                                 tvec2, tvec3, tvec4, tmp1, tmp2, tmp3, tmp4, \
                                 sdist1, sdist2, sdist3, sdist4)
@@ -329,7 +317,6 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbcU;  tn += 4)
                                 {
                                         ti1 = tn * dimensions;
@@ -373,25 +360,21 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                         if (sdist2[0] < min_distance)
                                         {
                                                 min_distance = sdist2[0];
                                                 cl = trklass[tn + 1];
-                                                idx = tn + 1;
                                         }
                                         if (sdist3[0] < min_distance)
                                         {
                                                 min_distance = sdist3[0];
                                                 cl = trklass[tn + 2];
-                                                idx = tn + 2;
                                         }
                                         if (sdist4[0] < min_distance)
                                         {
                                                 min_distance = sdist4[0];
                                                 cl = trklass[tn + 3];
-                                                idx = tn + 3;
                                         }
                                 }
                                 for (;  tn < tbc;  tn++)
@@ -413,7 +396,6 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                                         {
                                                 min_distance = sdist1[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -439,7 +421,7 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
         float distance2 __attribute__((aligned(16)));
         float distance3 __attribute__((aligned(16)));
         float distance4 __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128 vec, tvec1, tvec2, tvec3, tvec4;
         __m128 tmp1, tmp2, tmp3, tmp4;
         __m128 dist1, dist2, dist3, dist4;
@@ -454,7 +436,7 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                                tbn + trblockcount : trcount);
                         tbcU = tbc & ~0x03;
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti1, ti2, ti3, ti4, \
+                                min_distance, cl, tn, ti1, ti2, ti3, ti4, \
                                 dist1, dist2, dist3, dist4, d, vec, tvec1, \
                                 tvec2, tvec3, tvec4, tmp1, tmp2, tmp3, tmp4, \
                                 distance1, distance2, distance3, distance4)
@@ -463,7 +445,6 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbcU;  tn += 4)
                                 {
                                         ti1 = tn * dimensions;
@@ -507,25 +488,21 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                                         {
                                                 min_distance = distance1;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                         if (distance2 < min_distance)
                                         {
                                                 min_distance = distance2;
                                                 cl = trklass[tn + 1];
-                                                idx = tn + 1;
                                         }
                                         if (distance3 < min_distance)
                                         {
                                                 min_distance = distance3;
                                                 cl = trklass[tn + 2];
-                                                idx = tn + 2;
                                         }
                                         if (distance4 < min_distance)
                                         {
                                                 min_distance = distance4;
                                                 cl = trklass[tn + 3];
-                                                idx = tn + 3;
                                         }
                                 }
                                 for (;  tn < tbc;  tn++)
@@ -547,7 +524,6 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                                         {
                                                 min_distance = distance1;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -570,7 +546,7 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
         double sdist2[2] __attribute__((aligned(16)));
         double sdist3[2] __attribute__((aligned(16)));
         double sdist4[2] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128d vec, tvec1, tvec2, tvec3, tvec4;
         __m128d tmp1, tmp2, tmp3, tmp4;
         __m128d dist1, dist2, dist3, dist4;
@@ -585,7 +561,7 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                                tbn + trblockcount : trcount);
                         tbcU = tbc & ~0x03;
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti1, ti2, ti3, ti4, \
+                                min_distance, cl, tn, ti1, ti2, ti3, ti4, \
                                 dist1, dist2, dist3, dist4, d, vec, tvec1, \
                                 tvec2, tvec3, tvec4, tmp1, tmp2, tmp3, tmp4, \
                                 sdist1, sdist2, sdist3, sdist4)
@@ -594,7 +570,6 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbcU;  tn += 4)
                                 {
                                         ti1 = tn * dimensions;
@@ -630,25 +605,21 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                                         {
                                                 min_distance = sdist1[0] + sdist1[1];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                         if (sdist2[0] + sdist2[1] < min_distance)
                                         {
                                                 min_distance = sdist2[0] + sdist2[1];
                                                 cl = trklass[tn + 1];
-                                                idx = tn + 1;
                                         }
                                         if (sdist3[0] + sdist3[1] < min_distance)
                                         {
                                                 min_distance = sdist3[0] + sdist3[1];
                                                 cl = trklass[tn + 2];
-                                                idx = tn + 2;
                                         }
                                         if (sdist4[0] + sdist4[1] < min_distance)
                                         {
                                                 min_distance = sdist4[0] + sdist4[1];
                                                 cl = trklass[tn + 3];
-                                                idx = tn + 3;
                                         }
                                 }
                                 for (;  tn < tbc;  tn++)
@@ -668,7 +639,6 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                                         {
                                                 min_distance = sdist1[0] + sdist1[1];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;

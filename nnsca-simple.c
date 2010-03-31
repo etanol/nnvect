@@ -21,7 +21,7 @@ void nn_byte_sca (int dimensions, int trcount, int trblockcount, char *trdata,
         int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
-        int cl, d, idx;
+        int cl, d;
         unsigned int min_distance, dist;
         char tmp;
 
@@ -34,13 +34,12 @@ void nn_byte_sca (int dimensions, int trcount, int trblockcount, char *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                                min_distance, cl, tn, ti, dist, d, tmp)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -54,7 +53,6 @@ void nn_byte_sca (int dimensions, int trcount, int trblockcount, char *trdata,
                                         {
                                                 min_distance = dist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -72,7 +70,7 @@ void nn_short_sca (int dimensions, int trcount, int trblockcount, short *trdata,
         int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
-        int cl, d, idx;
+        int cl, d;
         unsigned int min_distance, dist;
         short tmp;
 
@@ -85,13 +83,12 @@ void nn_short_sca (int dimensions, int trcount, int trblockcount, short *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                                min_distance, cl, tn, ti, dist, d, tmp)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -105,7 +102,6 @@ void nn_short_sca (int dimensions, int trcount, int trblockcount, short *trdata,
                                         {
                                                 min_distance = dist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -123,7 +119,7 @@ void nn_int_sca (int dimensions, int trcount, int trblockcount, int *trdata,
         int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
-        int cl, d, idx;
+        int cl, d;
         unsigned int min_distance, dist;
         int tmp;
 
@@ -136,13 +132,12 @@ void nn_int_sca (int dimensions, int trcount, int trblockcount, int *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                                min_distance, cl, tn, ti, dist, d, tmp)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -156,7 +151,6 @@ void nn_int_sca (int dimensions, int trcount, int trblockcount, int *trdata,
                                         {
                                                 min_distance = dist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -176,7 +170,7 @@ void nn_float_sca (int dimensions, int trcount, int trblockcount, float *trdata,
         int bc, bn, tbc, tbn;
         int n, tn;
         int i, ti;
-        int cl, d, idx;
+        int cl, d;
         float min_distance, dist;
         float tmp;
 
@@ -189,13 +183,12 @@ void nn_float_sca (int dimensions, int trcount, int trblockcount, float *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                                min_distance, cl, tn, ti, dist, d, tmp)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -209,7 +202,6 @@ void nn_float_sca (int dimensions, int trcount, int trblockcount, float *trdata,
                                         {
                                                 min_distance = dist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -227,7 +219,7 @@ void nn_double_sca (int dimensions, int trcount, int trblockcount, double *trdat
         int bn, bc, tbc, tbn;
         int n, tn;
         int i, ti;
-        int cl, d, idx;
+        int cl, d;
         double min_distance, dist;
         double tmp;
 
@@ -240,13 +232,12 @@ void nn_double_sca (int dimensions, int trcount, int trblockcount, double *trdat
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, tmp)
+                                min_distance, cl, tn, ti, dist, d, tmp)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -260,7 +251,6 @@ void nn_double_sca (int dimensions, int trcount, int trblockcount, double *trdat
                                         {
                                                 min_distance = dist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;

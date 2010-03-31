@@ -22,7 +22,7 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
         int i, ti;
         unsigned int min_distance;
         short sdist[8] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec;
         __m128i tmp1, tmp2, mask;
         __m128i dist;
@@ -36,14 +36,13 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, vec, \
-                                tvec, tmp1, mask, tmp2, sdist)
+                                min_distance, cl, tn, ti, dist, d, vec, tvec, \
+                                tmp1, mask, tmp2, sdist)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -66,7 +65,6 @@ void nn_byte_vec (int dimensions, int trcount, int trblockcount, char *trdata,
                                         {
                                                 min_distance = sdist[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -86,7 +84,7 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
         int i, ti;
         unsigned int min_distance;
         int sdist[4] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec;
         __m128i tmp1, tmp2;
         __m128i dist;
@@ -100,14 +98,13 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, vec, \
-                                tvec, tmp1, tmp2, sdist)
+                                min_distance, cl, tn, ti, dist, d, vec, tvec, \
+                                tmp1, tmp2, sdist)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -127,7 +124,6 @@ void nn_short_vec (int dimensions, int trcount, int trblockcount, short *trdata,
                                         {
                                                 min_distance = sdist[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -148,7 +144,7 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
         int i, ti;
         unsigned int min_distance;
         int sdist[4] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128i vec, tvec;
         __m128i tmp1, tmp2;
         __m128i dist;
@@ -162,14 +158,13 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, vec, \
-                                tvec, tmp1, tmp2, sdist)
+                                min_distance, cl, tn, ti, dist, d, vec, tvec, \
+                                tmp1, tmp2, sdist)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -189,7 +184,6 @@ void nn_int_vec (int dimensions, int trcount, int trblockcount, int *trdata,
                                         {
                                                 min_distance = sdist[0];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -212,7 +206,7 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
         int i, ti;
         float min_distance;
         float sdist __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128 vec, tvec;
         __m128 tmp1, tmp2;
         __m128 dist;
@@ -226,14 +220,13 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, vec, \
-                                tvec, tmp1, tmp2, sdist)
+                                min_distance, cl, tn, ti, dist, d, vec, tvec, \
+                                tmp1, tmp2, sdist)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -253,7 +246,6 @@ void nn_float_vec (int dimensions, int trcount, int trblockcount, float *trdata,
                                         {
                                                 min_distance = sdist;
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
@@ -273,7 +265,7 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
         int i, ti;
         double min_distance;
         double sdist[2] __attribute__((aligned(16)));
-        int cl, d, idx;
+        int cl, d;
         __m128d vec, tvec;
         __m128d tmp1, tmp2;
         __m128d dist;
@@ -287,14 +279,13 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                         tbc = (tbn + trblockcount < trcount ?
                                tbn + trblockcount : trcount);
                         #pragma omp parallel for schedule(static) private(i, \
-                                min_distance, cl, idx, tn, ti, dist, d, vec, \
-                                tvec, tmp1, tmp2, sdist)
+                                min_distance, cl, tn, ti, dist, d, vec, tvec, \
+                                tmp1, tmp2, sdist)
                         for (n = bn;  n < bc;  n++)
                         {
                                 i = n * dimensions;
                                 min_distance = distance[n];
                                 cl = klass[n];
-                                idx = -1;
                                 for (tn = tbn;  tn < tbc;  tn++)
                                 {
                                         ti = tn * dimensions;
@@ -312,7 +303,6 @@ void nn_double_vec (int dimensions, int trcount, int trblockcount, double *trdat
                                         {
                                                 min_distance = sdist[0] + sdist[1];
                                                 cl = trklass[tn];
-                                                idx = tn;
                                         }
                                 }
                                 distance[n] = min_distance;
